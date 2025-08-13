@@ -2,30 +2,31 @@
 import React from 'react'
 import { Textarea } from '@/components/ui/textarea'
 import { Button } from '@/components/ui/button'
-import { CableCar, MountainSnow, Plane, Globe2,Send, ArrowDown } from "lucide-react";
+import { CableCar, MountainSnow, Plane, Globe2,Send, ArrowDown, TreePalm, Hotel, HandCoins } from "lucide-react";
 import HeroVideoDialog from '@/components/magicui/hero-video-dialog';
 import { useUser } from '@clerk/nextjs';
 import { useRouter } from 'next/navigation';
 import { AuroraText } from "@/components/magicui/aurora-text";
-import { TypingAnimation } from "@/components/magicui/typing-animation";
+import { AnimatedShinyText } from "@/components/magicui/animated-shiny-text";
+import { SparklesText } from "@/components/magicui/sparkles-text";
 
 
 const suggestions=[
     {
-        title:'Create New Trip',
-        icon:<Globe2 className='text-blue-400 h-5 2-5'/>
+        title:'Plan my next vacation',
+        icon:<TreePalm className='text-green-400 h-5 2-5'/>
     },
     {
-        title:'Inspire me where to go',
-        icon:<Plane className='text-blue-400 h-5 2-5'/>
+        title:'Find the best hotels for my trip',
+        icon:<Hotel className='text-blue-400 h-5 2-5'/>
     },
     {
-        title:'Discover Hidden Gems',
-        icon:<MountainSnow className='text-blue-400 h-5 2-5'/>
+        title:'Plan a budget friendly trip',
+        icon:<HandCoins className='text-orange-400 h-5 2-5'/>
     },
     {
-        title:'Adventure Destination',
-        icon:<CableCar className='text-blue-400 h-5 2-5'/>
+        title:'Suggest a weekend gateway',
+        icon:<CableCar className='text-red-400 h-5 2-5'/>
     },
 ]
 
@@ -47,19 +48,26 @@ function Hero() {
   return (
     <div className='mt-24 flex items-center justify-center'>
         {/* Content */}
+        
         <div className='max-w-3xl w-full text-center space-y-6'>
-            <h1 className='text-xl md:text-5xl font-extrabold'>Your Perfect Trip, <AuroraText className='text-primary font-extrabold'>Planned by AI</AuroraText></h1>
-            <p className='text-lg'>Tell me what you want, I'll handle the rest - Flights, Hotels, Trip Planning in seconds</p>
+            <div className='flex justify-center'>
+                <div className='w-fit group rounded-full border border-black/5 bg-neutral-100 text-base text-white transition-all ease-in hover:cursor-pointer hover:bg-neutral-200 dark:border-white/5 dark:bg-neutral-900 dark:hover:bg-neutral-800"'>
+                    <AnimatedShinyText className="inline-flex items-center justify-center px-4 py-1 transition ease-out hover:text-neutral-600 hover:duration-300 hover:dark:text-neutral-400">✨ AI powered Trip Planning</AnimatedShinyText>
+                </div>
+            </div>
+            <h1 className='text-xl md:text-4xl'>Your Perfect Trip, <SparklesText className='text-primary text-5xl font-extrabold'>Planned by AI</SparklesText></h1>
+            <p className='text-1xl'>Your personal travel genie - one wish, and your entire trip appears.</p>
+            
+            
         
 
         {/* Input Box */}
         <div>
             <div className='border rounded-2xl p-4 shadow-2xs relative'>
                 
-                    <Textarea placeholder="Create a trip from Paris to New York" className="w-full h-28 bg-transparent border-none focus-visible:ring-0 shadow-none resize-none" />
-                
-                
-                <Button size="icon" className="absolute bottom-6 right-6" onClick={onSend}>
+                <Textarea placeholder="Create a trip from Paris to New York" className="w-full h-28 bg-transparent border-none focus-visible:ring-0 shadow-none resize-none" />
+                              
+                <Button size="icon" className="absolute bottom-6 right-6 hover:cursor-pointer" onClick={onSend}>
                   <Send className="h-4 w-4" />
                 </Button>
             </div>
@@ -76,7 +84,7 @@ function Hero() {
         </div>
 
         <div className='flex items-center justify-center flex-col'>
-            <h2 className='my-7 mt-14 flex gap-2 text-center'>Not sure where to start? <strong>See how it works</strong> <ArrowDown/> </h2>
+            <h2 className='my-7 mt-14 flex gap-2 text-center hover:cursor-pointer'>Not sure what’s next?  <strong>I’ll walk you through it.</strong> <ArrowDown/> </h2>
 
         {/* Video Section */}
             <HeroVideoDialog

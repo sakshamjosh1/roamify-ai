@@ -23,16 +23,16 @@ function Header() {
   return (
     <div className='flex justify-between items-center p-4'>
        {/* Logo */}
-       <div className='flex gap-2 items-center'>
+       <div className='flex gap-2 items-center hover:cursor-pointer'>
            <Image src={'/logo.png'} alt='logo' width={40} height={40}/>
-           <h2 className='font-bold text-2xl'>RoamifyAI</h2>
+           <h2 className='font-extrabold text-2xl'>RoamifyAI</h2>
        </div>
        
        {/* Menu Options */}
        <div className='flex gap-8 items-center '>
           {menuOptions.map((menu, index)=>(
               <Link key={menu.path} href={menu.path}>
-                  <h2 className='font-bold text-lg hover:scale-105 transition-all hover:text-primary'>{menu.name}</h2>
+                  <h2 className=' text-lg hover:scale-105 transition-transform hover:text-primary'>{menu.name}</h2>
               </Link>
             
           ))}
@@ -40,7 +40,7 @@ function Header() {
 
        {/* Get Started */}
        <SignInButton mode='modal'>
-          <Button>Get Started</Button>
+          <Button className='hover:cursor-pointer'>Get Started</Button>
        </SignInButton>
        
     </div>
