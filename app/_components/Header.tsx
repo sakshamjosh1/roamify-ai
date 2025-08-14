@@ -3,6 +3,7 @@ import Image from 'next/image';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { SignInButton } from '@clerk/nextjs';
+import { InteractiveHoverButton } from "@/components/magicui/interactive-hover-button";
 
 const menuOptions=[
     {
@@ -23,10 +24,10 @@ function Header() {
   return (
     <div className='flex justify-between items-center p-4'>
        {/* Logo */}
-       <div className='flex gap-2 items-center hover:cursor-pointer'>
+       <Link href="/" className='flex gap-2 items-center hover:cursor-pointer'>
            <Image src={'/logo.png'} alt='logo' width={40} height={40}/>
            <h2 className='font-extrabold text-2xl'>RoamifyAI</h2>
-       </div>
+       </Link>
        
        {/* Menu Options */}
        <div className='flex gap-8 items-center '>
@@ -40,7 +41,7 @@ function Header() {
 
        {/* Get Started */}
        <SignInButton mode='modal'>
-          <Button className='hover:cursor-pointer'>Get Started</Button>
+          <InteractiveHoverButton className='hover:cursor-pointer'>Get Started</InteractiveHoverButton>
        </SignInButton>
        
     </div>
