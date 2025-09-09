@@ -10,7 +10,6 @@ import { AuroraText } from "@/components/magicui/aurora-text";
 import { AnimatedShinyText } from "@/components/magicui/animated-shiny-text";
 import { SparklesText } from "@/components/magicui/sparkles-text";
 
-
 const suggestions=[
     {
         title:'Plan my next vacation',
@@ -30,8 +29,6 @@ const suggestions=[
     },
 ]
 
-
-
 function Hero() {
 
     const { user } = useUser();
@@ -43,6 +40,7 @@ function Hero() {
             return ;
         }
         //Navigate to Create Trip Planner Web Page
+        router.push('/create-new-trip')
     }
 
   return (
