@@ -35,7 +35,8 @@ export async function POST( req: NextRequest){
 
     try{
     const completion = await openai.chat.completions.create({
-    model: 'openai/gpt-oss-120b:free',
+    model: 'deepseek/deepseek-r1-0528:free',
+    response_format:{type:'json_object'},
     messages: [
       {
         role:'system',
