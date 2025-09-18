@@ -6,10 +6,12 @@ import { Send } from "lucide-react";
 import axios from 'axios';
 import { Assistant } from 'next/font/google';
 import EmptyState from './EmptyState';
+import GroupSizeUI from './GroupSizeUI';
 
 type Message={
     role:string,
     content:string
+    ui?:string,
 }
 
 function Chatbox() {
@@ -32,9 +34,21 @@ function Chatbox() {
         
         setMessages((prev:Message[])=>[...prev,{
             role:'assistant',
-            content:result?.data?.resp
+            content:result?.data?.resp,
+            ui:result.data?.ui
         }]);
         console.log(result.data);
+    }
+
+    const RenderGenerativeUI=(ui:string)=>{
+        if(ui=='budget'){
+            //budget ui
+        }
+        else if(ui=='groupSize'){
+            //group size ui
+            return <GroupSizeUI/> 
+        }
+        return null;
     }
 
   return (
@@ -50,6 +64,7 @@ function Chatbox() {
                 <div className='flex justify-end mt-2' key={index}>
                     <div className='max-w-lg bg-primary text-white px-4 py-2 rounded-lg'>
                         {msg.content}
+                        {RenderGenerativeUI(msg.ui??'')}
                     </div>
                 </div> :
                 <div className='flex justify-start mt-2' key={index}>
