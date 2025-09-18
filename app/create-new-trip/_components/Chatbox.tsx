@@ -5,6 +5,7 @@ import { Button } from '@/components/ui/button'
 import { Send } from "lucide-react";
 import axios from 'axios';
 import { Assistant } from 'next/font/google';
+import EmptyState from './EmptyState';
 
 type Message={
     role:string,
@@ -25,7 +26,7 @@ function Chatbox() {
 
         setMessages((prev:Message[])=>[...prev,newMsg]);
 
-        const result = await axios.post('http://localhost:3000/api/aimodel',{
+        const result = await axios.post('/api/aimodel',{
             messages:[...messages,newMsg]
         });
         
@@ -37,7 +38,11 @@ function Chatbox() {
     }
 
   return (
+
     <div className='h-[85vh] flex flex-col '>
+        {messages?.length==0&&
+        <EmptyState onSelectOption={(v:string)=>{setUserInput(v); onSend}}/>
+        }
         {/* Display Messages */}
         <section className='flex-1 overflow-y-auto p-4'>
             {messages.map((msg:Message,index)=>(

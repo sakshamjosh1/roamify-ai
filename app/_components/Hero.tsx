@@ -10,7 +10,7 @@ import { AuroraText } from "@/components/magicui/aurora-text";
 import { AnimatedShinyText } from "@/components/magicui/animated-shiny-text";
 import { SparklesText } from "@/components/magicui/sparkles-text";
 
-const suggestions=[
+export const suggestions=[
     {
         title:'Plan my next vacation',
         icon:<TreePalm className='text-green-400 h-5 2-5'/>
