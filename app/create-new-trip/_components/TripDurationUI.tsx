@@ -34,7 +34,7 @@ function TripDurationUI({ onSelectedOption }: TripDurationProps) {
                 {/* Minus Button */}
                 <button
                     onClick={handleDecrement}
-                    className="p-3 text-4xl font-light text-gray-700 bg-gray-200 rounded-full hover:bg-red-500 hover:text-white transition duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
+                    className="p-3 text-4xl font-light text-gray-700 bg-gray-200 rounded-full hover:bg-red-700 hover:text-white transition duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
                     disabled={duration <= 1}
                 >
                     &minus;
@@ -48,7 +48,7 @@ function TripDurationUI({ onSelectedOption }: TripDurationProps) {
                 {/* Plus Button */}
                 <button
                     onClick={handleIncrement}
-                    className="p-3 text-4xl font-light text-gray-700 bg-gray-200 rounded-full hover:bg-green-500 hover:text-white transition duration-200"
+                    className="p-3 text-4xl font-light text-gray-700 bg-gray-200 rounded-full hover:bg-green-700 hover:text-white transition duration-200"
                 >
                     +
                 </button>

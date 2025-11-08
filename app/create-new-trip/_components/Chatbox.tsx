@@ -1,7 +1,7 @@
 // chatbox.tsx
 
 "use client"
-import React, { useState } from 'react'
+import React, { useEffect, useState } from 'react'
 import { Textarea } from '@/components/ui/textarea'
 import { Button } from '@/components/ui/button'
 import { Send } from "lucide-react";
@@ -23,12 +23,14 @@ function Chatbox() {
 
     const [messages, setMessages] = useState<Message[]>([]);
     const [userInput, setUserInput] = useState<string>('');
+    const[isFinal, setIsFinal]=useState(false);
+    const[tripDetail, setTripDetail]=useState();
     
     // onSend handles both text input and UI component clicks
     const onSend = async (messageToSend?: string) => {
         
         const input = messageToSend || userInput;
-        if (!input?.trim()) return;
+        // if (!input?.trim()) return;
 
         // 1. Clear the input field only if sending from the text box
         if (!messageToSend) {
@@ -50,15 +52,25 @@ function Chatbox() {
         // 5. Send the COMPLETE message history to the API.
         try {
             const result = await axios.post('/api/aimodel', {
-                messages: completeHistory
+                messages: completeHistory,
+                isFinal:isFinal
             });
 
+            console.log("TRIP", result.data);
+
+            
+
             // 6. Update state with the assistant's response
-            setMessages((prev: Message[]) => [...prev, {
+            !isFinal&&setMessages((prev: Message[]) => [...prev, {
                 role: 'assistant',
                 content: result?.data?.resp,
                 ui: result.data?.ui
             }]);
+
+            if(isFinal)              
+            {
+                setTripDetail(result?.data?.trip_plan);
+            }
 
         } catch (error) {
             console.error("Error calling AI model API:", error);
@@ -84,13 +96,27 @@ function Chatbox() {
         }
         // If the AI returns 'text' or 'final', we also return null to let the text input handle it.
         else if (ui === 'final') {
-             return <FinalItineraryUI onSelectedOption={(v: string) => onSend(v)} />
-             return null;
+             return <FinalItineraryUI onViewTrip={()=> console.log()}
+             disable={!tripDetail}
+             />
         }
         return null;
     }
 
-    
+    useEffect(()=>{
+        const lastMsg=messages[messages.length-1];
+        if(lastMsg?.ui=='final'){
+            setIsFinal(true);
+            setUserInput('Ok, Great!');
+        }
+    }, [messages])
+
+    useEffect(()=>{
+        if(isFinal && userInput){
+            onSend();
+        }
+    }, [isFinal]);
+
     return (
 
         <div className='h-[85vh] flex flex-col '>
