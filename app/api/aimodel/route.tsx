@@ -1,55 +1,83 @@
+// route.tsx
+
 import { NextRequest, NextResponse } from "next/server";
 
 import OpenAI from 'openai';
 export const openai = new OpenAI({
-  baseURL: 'https://openrouter.ai/api/v1',
-  apiKey: process.env.OPENROUTER_API_KEY,
-  defaultHeaders: {
-    'HTTP-Referer': '<YOUR_SITE_URL>', // Optional. Site URL for rankings on openrouter.ai.
-    'X-Title': '<YOUR_SITE_NAME>', // Optional. Site title for rankings on openrouter.ai.
-  },
+    baseURL: 'https://openrouter.ai/api/v1',
+    apiKey: process.env.OPENROUTER_API_KEY,
+    defaultHeaders: {
+        'HTTP-Referer': '<YOUR_SITE_URL>',
+        'X-Title': '<YOUR_SITE_NAME>',
+    },
 });
 
-const PROMPT=`You are an AI Trip Planner Agent. Your goal is to help the user plan a trip by **asking one relevant trip-related question at a time**.
-Only ask questions about the following details in order, and wait for the user's answer before asking the next:
-1. Starting location (source)
-2. Destination city or country
-3. Group size (Solo, Couple, Family, Friends)
-4. Budget (Low, Medium, High)
-5. Trip duration (number of days)
-6. Travel interests (e.g., adventure, sightseeing, cultural, food, nightlife, relaxation)
-7. Special requirements or preferences (if any)
-Do not ask multiple questions at once, and never ask irrelevant questions.
-If any answer is missing or unclear, politely ask the user to clarify before proceeding.
-Always maintain a conversational, interactive style while asking questions.
-Along with response also send which UI component to display for generative UI for example 'budget/groupSize/TripDuration/final', where Final means AI generating complete final output.
+// 💡 SLIGHTLY SIMPLIFIED PROMPT, MAINTAINING STRICT JSON AND UI MAPPING
+const PROMPT = `You are an AI Trip Planner Agent. Your goal is to collect trip details by asking one relevant question at a time.
 
-Once all required information is collected, generate and return a **strict JSON response only** (no explanations or extra text) with following JSON schema:
-{
-  resp: 'Text Resp',
-  ui: 'budget/groupSize/TripDuration/final'
-}`
+You MUST follow these rules for EVERY response:
+1. Respond ONLY with a single, strict JSON object. DO NOT include any extra text, commentary, code, or tags outside the JSON.
+2. The JSON schema is: { "resp": "The next conversational question to the user.", "ui": "The corresponding UI component key or 'text'" }
+3. Ask questions in this **exact sequential order** and use the specified 'ui' key:
+   - 1. Starting location (ui: 'text')
+   - 2. Destination (ui: 'text')
+   - 3. Group size (ui: 'groupSize')
+   - 4. Budget (ui: 'budget')
+   - 5. Trip duration (ui: 'TripDuration')
+   - 6. Travel interests (ui: 'text')
+   - 7. Special requirements (ui: 'text')
+4. When all information is collected, set 'ui' to 'final' and provide the trip plan in the 'resp' field.
+`;
 
 export async function POST( req: NextRequest){
-    const {messages}=await req.json();
+    const {messages} = await req.json();
 
-    try{
-    const completion = await openai.chat.completions.create({
-    model: 'deepseek/deepseek-r1-0528:free',
-    response_format:{type:'json_object'},
-    messages: [
-      {
-        role:'system',
-        content: PROMPT
-      },
-      ...messages
-    ],
-  });
-  console.log(completion.choices[0].message);
-  const message = completion.choices[0].message;
-  return NextResponse.json(JSON.parse(message.content??''));
-}
-  catch(e){
-    return NextResponse.json(e);
-  }
+    // Removed the explicit API key check as the error likely lies elsewhere based on your feedback.
+
+    try {
+        const completion = await openai.chat.completions.create({
+            // 💡 FIX: Using the model name that was previously working for network stability
+            model: 'openai/gpt-3.5-turbo', 
+            messages: [
+                {
+                    role: 'system',
+                    content: PROMPT
+                },
+                ...messages
+            ],
+            temperature: 0.0, 
+            // 💥 KEEP: Enforce strict JSON output for reliable Generative UI
+            response_format: { type: "json_object" }, 
+        });
+        
+        const message = completion.choices?.[0]?.message;
+
+        if (!message?.content) {
+            console.error("No content in model response:", completion);
+            return NextResponse.json({ error: "No content from model" });
+        }
+
+        let parsed;
+        try {
+            // Simple, reliable JSON parsing due to 'response_format' enforcement
+            parsed = JSON.parse(message.content);
+            
+            // Basic validation fallback
+            if (!parsed.resp) { parsed.resp = "Please continue with the trip details."; }
+            if (!parsed.ui) { parsed.ui = "text"; }
+            
+        } catch (err) {
+            console.warn("Model returned unparseable content. Returning raw text.", err);
+            // Fall back to showing the raw text
+            parsed = { resp: message.content, ui: "text" };
+        }
+
+        return NextResponse.json(parsed);
+
+    } catch(e) {
+        // This catch block handles network errors or other API exceptions
+        console.error("API call failed during execution:", e);
+        // Returning status 500 will trigger the user-friendly error message in Chatbox.tsx
+        return NextResponse.json({ resp: "An unexpected error occurred while communicating with the AI. Check server logs.", ui: "text" }, { status: 500 });
+    }
 }
