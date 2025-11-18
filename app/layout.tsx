@@ -1,7 +1,8 @@
 import type { Metadata } from "next";
 import { Manrope } from "next/font/google";
 import "./globals.css";
-import Provider from "./provider";
+// remove the default Provider import — use the named provider you implemented
+import { UserDetailProvider } from "./provider";
 import { ClerkProvider } from "@clerk/nextjs";
 import ConvexClientProvider from "./ConvexClientProvider";
 
@@ -25,7 +26,10 @@ export default function RootLayout({
         </head>
         <body className={manrope.className}>
           <ConvexClientProvider>
-            {children}
+            {/* <-- USER DETAIL PROVIDER MUST WRAP CHILDREN */}
+            <UserDetailProvider>
+              {children}
+            </UserDetailProvider>
           </ConvexClientProvider>
         </body>
       </html>
