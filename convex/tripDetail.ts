@@ -9,6 +9,22 @@ type TripDetailDoc = {
   createdAt: Date;
 };
 
+// remove any 'createdAt' keys recursively from objects/arrays
+function removeCreatedAtKeys(obj: any): any {
+  if (obj === null || obj === undefined) return obj;
+  if (Array.isArray(obj)) return obj.map(removeCreatedAtKeys);
+  if (typeof obj === "object") {
+    const out: any = {};
+    for (const [k, v] of Object.entries(obj)) {
+      if (k === "createdAt") continue;
+      out[k] = removeCreatedAtKeys(v);
+    }
+    return out;
+  }
+  return obj;
+}
+
+// safe deep sanitize to strip Dates -> strings, functions, undefined etc.
 function deepSanitize(obj: any) {
   return JSON.parse(JSON.stringify(obj));
 }
@@ -20,19 +36,28 @@ export const createTripDetail = mutation({
     uid: v.string(),
   },
   handler: async (ctx, args) => {
-    const { tripId, tripDetail, uid } = args;
+    // 1) Remove any createdAt keys anywhere in the incoming args object
+    const cleanedArgs = removeCreatedAtKeys(args);
 
-    // sanitize incoming payload so no Date objects slip in
+    // 2) Pull only the expected fields (they will be clean)
+    const { tripId, tripDetail, uid } = cleanedArgs as {
+      tripId: string;
+      tripDetail: any;
+      uid: string;
+    };
+
+    // 3) Sanitize tripDetail to remove any leftover non-serializable values
     const sanitizedTripDetail = deepSanitize(tripDetail);
 
-    // explicitly declare `doc` and its type so TS/VScode knows what it is
+    // 4) Build server-only document and set authoritative createdAt here
     const doc: TripDetailDoc = {
       tripId,
       tripDetail: sanitizedTripDetail,
       uid,
-      createdAt: new Date(),
+      createdAt: new Date()
     };
 
+    // 5) Insert into Convex table
     const id = await ctx.db.insert("TripDetailTable", doc);
 
     return { _id: id, ...doc };
