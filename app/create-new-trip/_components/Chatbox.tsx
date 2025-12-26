@@ -1,4 +1,5 @@
-"use client"
+"use client";
+
 import React, { useEffect, useState } from "react";
 import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
@@ -11,10 +12,10 @@ import TripDurationUI from "./TripDurationUI";
 import FinalItineraryUI from "./FinalItineraryUI";
 import { useMutation } from "convex/react";
 import { api } from "@/convex/_generated/api";
-import { useUserDetail } from "@/app/provider";
 import { v4 as uuidv4 } from "uuid";
+import { useUser } from "@clerk/nextjs";
 
-// Define the Message type
+// ---------------- Types ----------------
 type Message = {
   role: string;
   content: string;
@@ -31,248 +32,190 @@ type TripInfo = {
   itinerary: any;
 };
 
-// ------------------ Helpers ------------------
+// ---------------- Helpers ----------------
 
-// Remove any 'createdAt' keys recursively from an object/array
-function removeCreatedAtKeys(obj: any): any {
+// Remove any `createdAt` recursively
+function removeCreatedAt(obj: any): any {
   if (obj === null || obj === undefined) return obj;
-  if (Array.isArray(obj)) return obj.map(removeCreatedAtKeys);
+  if (Array.isArray(obj)) return obj.map(removeCreatedAt);
   if (typeof obj === "object") {
     const out: any = {};
     for (const [k, v] of Object.entries(obj)) {
       if (k === "createdAt") continue;
-      out[k] = removeCreatedAtKeys(v);
+      out[k] = removeCreatedAt(v);
     }
     return out;
   }
   return obj;
 }
 
-// Deep clone + sanitize via JSON round-trip to drop Dates/functions/undefined
-function deepSanitize(obj: any) {
-  return JSON.parse(JSON.stringify(obj));
+// Deep JSON sanitize (kills Dates, functions, undefined)
+function sanitize(obj: any) {
+  return removeCreatedAt(JSON.parse(JSON.stringify(obj)));
 }
 
-// ------------------ Component ------------------
+// ---------------- Component ----------------
 
-function Chatbox() {
+export default function Chatbox() {
   const [messages, setMessages] = useState<Message[]>([]);
-  const [userInput, setUserInput] = useState<string>("");
+  const [userInput, setUserInput] = useState("");
   const [isFinal, setIsFinal] = useState(false);
   const [tripDetail, setTripDetail] = useState<TripInfo | undefined>();
 
-  // Convex mutation (ensure generated api matches this name)
+  // Clerk
+  const { user, isLoaded } = useUser();
+
+  // Convex
   const saveTripDetail = useMutation(api.tripDetail.createTripDetail);
 
-  // Provider returns object { userDetail, setUserDetail }
-  const { userDetail, setUserDetail } = useUserDetail();
-
-  // onSend handles both text input and UI component clicks
+  // ---------------- Main Send Handler ----------------
   const onSend = async (messageToSend?: string) => {
     const input = messageToSend ?? userInput;
+    if (!messageToSend) setUserInput("");
 
-    // Clear the input field only if sending from the text box
-    if (!messageToSend) {
-      setUserInput("");
-    }
+    const newMsg: Message = { role: "user", content: input };
+    const history = [...messages, newMsg];
+    setMessages(history);
 
-    // Define the new user message
-    const newMsg: Message = {
-      role: "user",
-      content: input,
-    };
-
-    // Create the complete message history for the API call first
-    const completeHistory: Message[] = [...messages, newMsg];
-
-    // Update the component state with the new user message.
-    setMessages(completeHistory);
-
-    // Send the COMPLETE message history to the API.
     try {
-      const result = await axios.post("/api/aimodel", {
-        messages: completeHistory,
-        isFinal: isFinal,
+      const res = await axios.post("/api/aimodel", {
+        messages: history,
+        isFinal,
       });
 
-      console.log("TRIP", result.data);
+      console.log("AI response:", res.data);
 
-      // Update state with the assistant's response
       if (!isFinal) {
-        setMessages((prev: Message[]) => [
+        setMessages((prev) => [
           ...prev,
           {
             role: "assistant",
-            content: result?.data?.resp,
-            ui: result.data?.ui,
+            content: res.data.resp,
+            ui: res.data.ui,
           },
         ]);
+        return;
       }
 
-      if (isFinal) {
-        // The AI returned a trip plan. Before saving to Convex, sanitize it:
-        const rawPlan = result?.data?.trip_plan ?? {};
+      // ---------------- FINAL SAVE ----------------
 
-        // 1) Deep-clone & sanitize (this converts Dates -> ISO strings if they were strings,
-        //    and removes functions/undefined).
-        const cloned = deepSanitize(rawPlan);
+      const cleanedTrip = sanitize(res.data.trip_plan);
+      setTripDetail(cleanedTrip);
 
-        // 2) Remove any client-provided createdAt keys recursively (defensive)
-        const cleaned = removeCreatedAtKeys(cloned);
-
-        // Save cleaned plan to state for UI (so UI shows the same sanitized object)
-        setTripDetail(cleaned);
-
-        // Defensive: ensure the mutation exists and user id is present
-        if (typeof saveTripDetail === "function") {
-          const tripId = uuidv4();
-          const uid = userDetail?._id ?? "";
-
-          try {
-            // only attempt save if we have a uid (guest save skipped)
-            if (uid) {
-              await saveTripDetail({
-                tripDetail: cleaned,
-                tripId,
-                uid,
-              });
-            } else {
-              console.warn("No user id present — skipping saveTripDetail (guest user)");
-            }
-          } catch (convexErr) {
-            console.error("Error saving trip detail to Convex:", convexErr);
-            // Optionally show an assistant message about save failure
-            setMessages((prev) => [
-              ...prev,
-              {
-                role: "assistant",
-                content: "Saved the itinerary locally but failed to persist it to the database.",
-              },
-            ]);
-          }
-        } else {
-          console.warn("saveTripDetail mutation is not a function. Check the generated api path.");
-        }
+      // 🚨 CRITICAL FIX: WAIT FOR CLERK
+      if (!isLoaded) {
+        console.warn("Clerk not loaded yet — skipping save");
+        return;
       }
-    } catch (error) {
-      console.error("Error calling AI model API:", error);
-      // Display an error message if the API failed
-      setMessages((prev: Message[]) => [
+
+      if (!user?.id) {
+        console.warn("User not logged in — skipping save");
+        return;
+      }
+
+      const finalArgs = sanitize({
+        tripId: uuidv4(),
+        uid: user.id,
+        tripDetail: cleanedTrip,
+      });
+
+      console.log("Saving to Convex:", finalArgs);
+
+      await saveTripDetail(finalArgs);
+
+      console.log("✅ Trip saved to Convex");
+
+    } catch (err) {
+      console.error("Error:", err);
+      setMessages((prev) => [
         ...prev,
         {
           role: "assistant",
-          content: "Sorry, I ran into an error connecting to the AI. Please try again.",
+          content:
+            "Saved the itinerary locally but failed to persist it to the database.",
         },
       ]);
     }
   };
 
-  const RenderGenerativeUI = (ui: string) => {
-    if (ui === "budget") {
-      return <BudgetUI onSelectedOption={(v: string) => onSend(v)} />;
-    } else if (ui === "groupSize") {
-      return <GroupSizeUI onSelectedOption={(v: string) => onSend(v)} />;
-    } else if (ui === "TripDuration") {
-      return <TripDurationUI onSelectedOption={(v: string) => onSend(v)} />;
-    } else if (ui === "final") {
-      // Use the most recent assistant message with this UI as the planning text
-      const lastAssistantWithUI = [...messages]
-        .reverse()
-        .find((m) => m.role === "assistant" && m.ui === "final");
-      const planningText = lastAssistantWithUI?.content ?? "Planning your dream trip...";
-
+  // ---------------- UI Renderer ----------------
+  const renderUI = (ui: string) => {
+    if (ui === "budget") return <BudgetUI onSelectedOption={onSend} />;
+    if (ui === "groupSize") return <GroupSizeUI onSelectedOption={onSend} />;
+    if (ui === "TripDuration") return <TripDurationUI onSelectedOption={onSend} />;
+    if (ui === "final") {
+      const last = [...messages].reverse().find((m) => m.ui === "final");
       return (
         <FinalItineraryUI
-          planningText={planningText}
-          isTripReady={Boolean(tripDetail)} // ← controls disabled/enabled state
-          onViewTrip={() => console.log("View Trip clicked")}
-          onSelectedOption={(v: string) => onSend(v)}
+          planningText={last?.content ?? "Planning your trip..."}
+          isTripReady={!!tripDetail}
+          onViewTrip={() => console.log("View Trip")}
+          onSelectedOption={onSend}
         />
       );
     }
     return null;
   };
 
+  // ---------------- Effects ----------------
   useEffect(() => {
-    const lastMsg = messages[messages.length - 1];
-    if (lastMsg?.ui === "final") {
+    const last = messages[messages.length - 1];
+    if (last?.ui === "final") {
       setIsFinal(true);
       setUserInput("Ok, Great!");
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [messages]);
 
   useEffect(() => {
-    if (isFinal && userInput) {
-      onSend();
-      console.log("Final stage");
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+    if (isFinal && userInput) onSend();
   }, [isFinal]);
 
+  // ---------------- Render ----------------
   return (
-    <div className="h-[85vh] flex flex-col ">
-      {/* EmptyState logic */}
-      {messages?.length === 0 && (
-        <EmptyState
-          onSelectOption={(v: string) => {
-            onSend(v);
-          }}
-        />
-      )}
+    <div className="h-[85vh] flex flex-col">
+      {messages.length === 0 && <EmptyState onSelectOption={onSend} />}
 
-      {/* Display Messages */}
       <section className="flex-1 overflow-y-auto p-4">
-        {messages.map((msg: Message, index) =>
+        {messages.map((msg, i) =>
           msg.role === "user" ? (
-            <div className="flex justify-end mt-5" key={index}>
-              <div className="max-w-lg bg-primary text-white px-4 py-2 rounded-xl rounded-tr-sm shadow-md">
+            <div key={i} className="flex justify-end mt-4">
+              <div className="bg-primary text-white px-4 py-2 rounded-xl">
                 {msg.content}
               </div>
             </div>
           ) : (
-            <div className="flex justify-start mt-2" key={index}>
-              {/* Assistant Message Bubble */}
-              <div className="max-w-lg bg-gray-100 text-black px-4 py-2 rounded-xl rounded-tl-sm shadow-md">
+            <div key={i} className="flex justify-start mt-4">
+              <div className="bg-gray-100 px-4 py-2 rounded-xl">
                 {msg.content}
-                {/* Render UI if 'ui' key is present */}
-                {msg.ui && RenderGenerativeUI(msg.ui)}
+                {msg.ui && renderUI(msg.ui)}
               </div>
             </div>
           )
         )}
       </section>
 
-      {/* User Input */}
-      <section>
-        <div className="p-2">
-          <div className="border rounded-2xl p-4 shadow-xl relative">
-            <Textarea
-              placeholder="Create a trip from Paris to New York"
-              className="w-full h-20 bg-transparent border-none focus-visible:ring-0 shadow-none resize-none pr-12"
-              onChange={(event) => setUserInput(event.target.value ?? "")}
-              value={userInput}
-              onKeyDown={(e) => {
-                // Allows sending on Enter key press without Shift
-                if (e.key === "Enter" && !e.shiftKey) {
-                  e.preventDefault();
-                  onSend();
-                }
-              }}
-            />
-
-            <Button
-              size="icon"
-              className="absolute bottom-6 right-6 hover:cursor-pointer bg-primary"
-              onClick={() => onSend()}
-            >
-              <Send className="h-4 w-4" />
-            </Button>
-          </div>
+      <section className="p-2">
+        <div className="border rounded-2xl p-4 relative">
+          <Textarea
+            placeholder="Create a trip from Paris to New York"
+            value={userInput}
+            onChange={(e) => setUserInput(e.target.value)}
+            onKeyDown={(e) => {
+              if (e.key === "Enter" && !e.shiftKey) {
+                e.preventDefault();
+                onSend();
+              }
+            }}
+          />
+          <Button
+            size="icon"
+            className="absolute bottom-4 right-4"
+            onClick={() => onSend()}
+          >
+            <Send size={16} />
+          </Button>
         </div>
       </section>
     </div>
   );
 }
-
-export default Chatbox;
