@@ -10,7 +10,7 @@ import GroupSizeUI from "./GroupSizeUI";
 import BudgetUI from "./BudgetUI";
 import TripDurationUI from "./TripDurationUI";
 import FinalItineraryUI from "./FinalItineraryUI";
-import { useMutation } from "convex/react";
+import { useMutation, useQuery } from "convex/react";
 import { api } from "@/convex/_generated/api";
 import { v4 as uuidv4 } from "uuid";
 import { useUser } from "@clerk/nextjs";
@@ -64,8 +64,10 @@ export default function Chatbox() {
 
   // Clerk
   const { user, isLoaded } = useUser();
-
-  // Convex
+  const getUserByClerkId = useQuery(
+    api.user.getUserByClerkId,
+    user?.id ? { clerkId: user.id } : "skip"
+  );
   const saveTripDetail = useMutation(api.tripDetail.createTripDetail);
 
   // ---------------- Main Send Handler ----------------
@@ -97,34 +99,31 @@ export default function Chatbox() {
         return;
       }
 
-      // ---------------- FINAL SAVE ----------------
-
       const cleanedTrip = sanitize(res.data.trip_plan);
       setTripDetail(cleanedTrip);
 
-      // 🚨 CRITICAL FIX: WAIT FOR CLERK
-      if (!isLoaded) {
-        console.warn("Clerk not loaded yet — skipping save");
+      if (!isLoaded || !user?.id) {
+        console.warn("Clerk not loaded or user not logged in — skipping save");
         return;
       }
 
-      if (!user?.id) {
-        console.warn("User not logged in — skipping save");
+      const userTableDoc = getUserByClerkId;
+      if (!userTableDoc) {
+        console.error("User not found in UserTable");
         return;
       }
 
-      const finalArgs = sanitize({
+      const finalArgs = {
         tripId: uuidv4(),
-        uid: user.id,
+        uid: userTableDoc._id, // Pass the UserTable document ID
         tripDetail: cleanedTrip,
-      });
+      };
 
       console.log("Saving to Convex:", finalArgs);
 
       await saveTripDetail(finalArgs);
 
       console.log("✅ Trip saved to Convex");
-
     } catch (err) {
       console.error("Error:", err);
       setMessages((prev) => [

@@ -2,14 +2,14 @@ import { mutation, query } from "./_generated/server";
 import { v } from "convex/values";
 
 /**
- * Create or fetch user by Clerk ID
+ * Create or fetch a user using Clerk ID
  */
 export const createNewUser = mutation({
   args: {
+    clerkId: v.string(),
     name: v.string(),
     email: v.string(),
     imageUrl: v.string(),
-    clerkId: v.string(),
   },
   handler: async (ctx, args) => {
     const existing = await ctx.db
@@ -20,10 +20,10 @@ export const createNewUser = mutation({
     if (existing) return existing;
 
     const id = await ctx.db.insert("UserTable", {
+      clerkId: args.clerkId,
       name: args.name,
       email: args.email,
       imageUrl: args.imageUrl,
-      clerkId: args.clerkId,
     });
 
     return await ctx.db.get(id);
@@ -31,7 +31,7 @@ export const createNewUser = mutation({
 });
 
 /**
- * Fetch Convex user using Clerk ID
+ * Fetch Convex user by Clerk ID
  */
 export const getUserByClerkId = query({
   args: { clerkId: v.string() },

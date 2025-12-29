@@ -2,59 +2,27 @@
 import { mutation } from "./_generated/server";
 import { v } from "convex/values";
 
-/**
- * Remove any client-sent `createdAt` keys recursively.
- * Convex does NOT allow Date objects, and we control createdAt server-side.
- */
-function removeCreatedAtKeys(obj: any): any {
-  if (obj === null || obj === undefined) return obj;
-  if (Array.isArray(obj)) return obj.map(removeCreatedAtKeys);
-  if (typeof obj === "object") {
-    const out: any = {};
-    for (const [key, value] of Object.entries(obj)) {
-      if (key === "createdAt") continue;
-      out[key] = removeCreatedAtKeys(value);
-    }
-    return out;
-  }
-  return obj;
-}
-
-/**
- * Deep sanitize to remove Dates, functions, undefined, etc.
- */
-function deepSanitize(obj: any) {
-  return JSON.parse(JSON.stringify(obj));
-}
-
 export const createTripDetail = mutation({
   args: {
     tripId: v.string(),
     tripDetail: v.any(),
-    uid: v.id("UserTable"), // ✅ MUST be Convex document ID
+    uid: v.id("UserTable"), // Ensure uid references a valid UserTable document
   },
-
   handler: async (ctx, args) => {
-    // 1️⃣ Remove any client-created createdAt fields
-    const cleanedTripDetail = removeCreatedAtKeys(args.tripDetail);
+    // Validate that the uid exists in the UserTable
+    const user = await ctx.db.get(args.uid);
+    if (!user) {
+      throw new Error(`User with ID ${args.uid} does not exist in UserTable`);
+    }
 
-    // 2️⃣ Deep sanitize payload
-    const sanitizedTripDetail = deepSanitize(cleanedTripDetail);
-
-    // 3️⃣ Build document strictly matching schema
-    const doc = {
+    // Insert the trip detail into the TripDetailTable
+    const id = await ctx.db.insert("TripDetailTable", {
       tripId: args.tripId,
-      tripDetail: sanitizedTripDetail,
-      uid: args.uid, // ✅ Convex ID
-      createdAt: new Date().toISOString(), // ✅ STRING ONLY
-    };
+      tripDetail: args.tripDetail,
+      uid: args.uid,
+      createdAt: new Date().toISOString(), // Add a timestamp
+    });
 
-    // 4️⃣ Insert into DB
-    const id = await ctx.db.insert("TripDetailTable", doc);
-
-    return {
-      _id: id,
-      ...doc,
-    };
+    return await ctx.db.get(id);
   },
 });
