@@ -99,6 +99,7 @@ export async function POST( req: NextRequest){
             temperature: 0.0, 
             // 💥 KEEP: Enforce strict JSON output for reliable Generative UI
             response_format: { type: "json_object" }, 
+            max_tokens: 1000,
         });
         
         const message = completion.choices?.[0]?.message;
@@ -128,7 +129,18 @@ export async function POST( req: NextRequest){
     } catch(e) {
         // This catch block handles network errors or other API exceptions
         console.error("API call failed during execution:", e);
+        if (e?.status === 402 || e?.code === 402) {
+          return NextResponse.json(
+            {
+              resp: "⚠️ AI usage limit reached. Please try again later.",
+              ui: "text",
+            },
+            { status: 402 }
+          );
+        }
         // Returning status 500 will trigger the user-friendly error message in Chatbox.tsx
-        return NextResponse.json({ resp: "An unexpected error occurred while communicating with the AI. Check server logs.", ui: "text" }, { status: 500 });
+        return NextResponse.json(
+          { resp: "An unexpected error occurred while communicating with the AI. Check server logs.", ui: "text" }, 
+          { status: 500 });
     }
 }
