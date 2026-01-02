@@ -5,11 +5,13 @@ import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
 import { Send } from "lucide-react";
 import axios from "axios";
+
 import EmptyState from "./EmptyState";
 import GroupSizeUI from "./GroupSizeUI";
 import BudgetUI from "./BudgetUI";
 import TripDurationUI from "./TripDurationUI";
 import FinalItineraryUI from "./FinalItineraryUI";
+
 import { useMutation, useQuery } from "convex/react";
 import { api } from "@/convex/_generated/api";
 import { v4 as uuidv4 } from "uuid";
@@ -34,10 +36,11 @@ type TripInfo = {
 
 // ---------------- Helpers ----------------
 
-// Remove any `createdAt` recursively
+// Remove any createdAt recursively
 function removeCreatedAt(obj: any): any {
-  if (obj === null || obj === undefined) return obj;
+  if (obj === null || obj === undefined) return obj; // Fixed 'or' to '||'
   if (Array.isArray(obj)) return obj.map(removeCreatedAt);
+
   if (typeof obj === "object") {
     const out: any = {};
     for (const [k, v] of Object.entries(obj)) {
@@ -46,12 +49,19 @@ function removeCreatedAt(obj: any): any {
     }
     return out;
   }
+
   return obj;
 }
 
 // Deep JSON sanitize (kills Dates, functions, undefined)
-function sanitize(obj: any) {
-  return removeCreatedAt(JSON.parse(JSON.stringify(obj)));
+function sanitize(obj: any): any | null {
+  if (!obj || typeof obj !== "object") return null;
+
+  try {
+    return JSON.parse(JSON.stringify(obj));
+  } catch {
+    return null;
+  }
 }
 
 // ---------------- Component ----------------
@@ -64,10 +74,12 @@ export default function Chatbox() {
 
   // Clerk
   const { user, isLoaded } = useUser();
+
   const getUserByClerkId = useQuery(
     api.user.getUserByClerkId,
     user?.id ? { clerkId: user.id } : "skip"
   );
+
   const saveTripDetail = useMutation(api.tripDetail.createTripDetail);
 
   // ---------------- Main Send Handler ----------------
@@ -85,6 +97,9 @@ export default function Chatbox() {
         isFinal,
       });
 
+      // Define 'plan' variable to resolve errors
+      const plan = res.data.trip_plan || null;
+
       console.log("AI response:", res.data);
 
       if (!isFinal) {
@@ -99,11 +114,24 @@ export default function Chatbox() {
         return;
       }
 
-      const cleanedTrip = sanitize(res.data.trip_plan);
+      if (!plan) {
+        setMessages((prev) => [
+          ...prev,
+          {
+            role: "assistant",
+            content: "❌ Trip generation failed. Please try again.",
+          },
+        ]);
+        return;
+      }
+
+      const cleanedTrip = sanitize(plan);
       setTripDetail(cleanedTrip);
 
       if (!isLoaded || !user?.id) {
-        console.warn("Clerk not loaded or user not logged in — skipping save");
+        console.warn(
+          "Clerk not loaded or user not logged in — skipping save"
+        );
         return;
       }
 
@@ -115,7 +143,7 @@ export default function Chatbox() {
 
       const finalArgs = {
         tripId: uuidv4(),
-        uid: userTableDoc._id, // Pass the UserTable document ID
+        uid: userTableDoc._id,
         tripDetail: cleanedTrip,
       };
 
@@ -141,7 +169,9 @@ export default function Chatbox() {
   const renderUI = (ui: string) => {
     if (ui === "budget") return <BudgetUI onSelectedOption={onSend} />;
     if (ui === "groupSize") return <GroupSizeUI onSelectedOption={onSend} />;
-    if (ui === "TripDuration") return <TripDurationUI onSelectedOption={onSend} />;
+    if (ui === "TripDuration")
+      return <TripDurationUI onSelectedOption={onSend} />;
+
     if (ui === "final") {
       const last = [...messages].reverse().find((m) => m.ui === "final");
       return (
@@ -172,7 +202,9 @@ export default function Chatbox() {
   // ---------------- Render ----------------
   return (
     <div className="h-[85vh] flex flex-col">
-      {messages.length === 0 && <EmptyState onSelectOption={onSend} />}
+      {messages.length === 0 && (
+        <EmptyState onSelectOption={onSend} />
+      )}
 
       <section className="flex-1 overflow-y-auto p-4">
         {messages.map((msg, i) =>
