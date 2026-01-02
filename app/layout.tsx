@@ -24,9 +24,9 @@ export default function RootLayout({
         <head>
           <link rel="icon" href="/favicon.png" />
         </head>
-        <body className={manrope.className}>
+        <body className={manrope.className} suppressHydrationWarning>
           <ConvexClientProvider>
-            {/* <-- USER DETAIL PROVIDER MUST WRAP CHILDREN */}
+            {/* Ensure consistent rendering by wrapping children */}
             <UserDetailProvider>
               {children}
             </UserDetailProvider>
