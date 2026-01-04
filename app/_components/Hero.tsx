@@ -53,7 +53,7 @@ function Hero() {
                     <AnimatedShinyText className="inline-flex items-center justify-center px-4 py-1 transition ease-out hover:text-neutral-600 hover:duration-300 hover:dark:text-neutral-400">✨ AI powered Trip Planning</AnimatedShinyText>
                 </div>
             </div>
-            <h1 className='text-xl md:text-4xl'>Your Perfect Trip, <SparklesText className='text-primary text-5xl font-extrabold'>Planned by AI</SparklesText></h1>
+            <h1 className='text-xl md:text-4xl'>Your Perfect Trip <SparklesText className='text-primary text-5xl font-extrabold'>Planned by AI</SparklesText></h1>
             <p className='text-1xl'>Your personal travel genie - one wish, and your entire trip appears.</p>
             
             
