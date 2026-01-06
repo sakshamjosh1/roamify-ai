@@ -38,7 +38,7 @@ type TripInfo = {
 
 // Remove any createdAt recursively
 function removeCreatedAt(obj: any): any {
-  if (obj === null || obj === undefined) return obj; // Fixed 'or' to '||'
+  if (obj === null || obj === undefined) return obj;
   if (Array.isArray(obj)) return obj.map(removeCreatedAt);
 
   if (typeof obj === "object") {
@@ -53,8 +53,8 @@ function removeCreatedAt(obj: any): any {
   return obj;
 }
 
-// Deep JSON sanitize (kills Dates, functions, undefined)
-function sanitize(obj: any): any | null {
+// Deep JSON sanitize (TypeScript-safe)
+function sanitize<T>(obj: T): T | null {
   if (!obj || typeof obj !== "object") return null;
 
   try {
@@ -71,6 +71,12 @@ export default function Chatbox() {
   const [userInput, setUserInput] = useState("");
   const [isFinal, setIsFinal] = useState(false);
   const [tripDetail, setTripDetail] = useState<TripInfo | undefined>();
+
+  // ✅ NEW (safe, additive)
+  const [tripStatus, setTripStatus] = useState<
+    "idle" | "created" | "updated"
+  >("idle");
+  const [changeSummary, setChangeSummary] = useState<string | null>(null);
 
   // Clerk
   const { user, isLoaded } = useUser();
@@ -97,7 +103,6 @@ export default function Chatbox() {
         isFinal,
       });
 
-      // Define 'plan' variable to resolve errors
       const plan = res.data.trip_plan || null;
 
       console.log("AI response:", res.data);
@@ -125,8 +130,19 @@ export default function Chatbox() {
         return;
       }
 
-      const cleanedTrip = sanitize(plan);
+      const cleanedTrip = sanitize<TripInfo>(plan);
+      if (!cleanedTrip) return;
+
+      // ✅ Detect update vs create
+      const isUpdate = !!tripDetail;
+
       setTripDetail(cleanedTrip);
+      setTripStatus(isUpdate ? "updated" : "created");
+      setChangeSummary(
+        isUpdate
+          ? "Your itinerary has been updated based on your request."
+          : "Your trip is ready!"
+      );
 
       if (!isLoaded || !user?.id) {
         console.warn(
@@ -150,6 +166,17 @@ export default function Chatbox() {
       console.log("Saving to Convex:", finalArgs);
 
       await saveTripDetail(finalArgs);
+
+      // ✅ User-facing confirmation
+      setMessages((prev) => [
+        ...prev,
+        {
+          role: "assistant",
+          content: isUpdate
+            ? "✨ Itinerary updated! Your changes have been saved."
+            : "✅ Trip created successfully!",
+        },
+      ]);
 
       console.log("✅ Trip saved to Convex");
     } catch (err) {
@@ -178,6 +205,8 @@ export default function Chatbox() {
         <FinalItineraryUI
           planningText={last?.content ?? "Planning your trip..."}
           isTripReady={!!tripDetail}
+          tripStatus={tripStatus}        // ✅ NEW
+          changeSummary={changeSummary}  // ✅ NEW
           onViewTrip={() => console.log("View Trip")}
           onSelectedOption={onSend}
         />

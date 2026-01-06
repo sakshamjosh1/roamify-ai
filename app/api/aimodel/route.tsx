@@ -99,7 +99,7 @@ export async function POST( req: NextRequest){
             temperature: 0.0, 
             // 💥 KEEP: Enforce strict JSON output for reliable Generative UI
             response_format: { type: "json_object" }, 
-            max_tokens: 1000,
+            
         });
         
         const message = completion.choices?.[0]?.message;
