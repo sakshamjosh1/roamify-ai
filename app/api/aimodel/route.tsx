@@ -19,15 +19,15 @@ You MUST follow these rules for EVERY response:
 1. Respond ONLY with a single, strict JSON object. DO NOT include any extra text, commentary, code, or tags outside the JSON.
 2. The JSON schema is: { "resp": "The next conversational question to the user.", "ui": "The corresponding UI component key or 'text'" }
 3. Ask questions in this **exact sequential order** and use the specified 'ui' key:
-   - 1. Starting location (ui: 'text')
-   - 2. Destination (ui: 'text')
-   - 3. Group size (ui: 'groupSize')
-   - 4. Budget (ui: 'budget')
-   - 5. Trip duration (ui: 'TripDuration')
-   - 6. Travel interests (ui: 'text')
-   - 7. Special requirements (ui: 'text')
+   - 1. Starting location (ui: 'text')
+   - 2. Destination (ui: 'text')
+   - 3. Group size (ui: 'groupSize')
+   - 4. Budget (ui: 'budget')
+   - 5. Trip duration (ui: 'TripDuration')
+   - 6. Travel interests (ui: 'text')
+   - 7. Special requirements (ui: 'text')
 4. When all information is collected, set 'ui' to 'final' and provide the trip plan in the 'resp' field.
-`;
+;`
 
 const FINAL_PROMPT = `Generate Travel Plan with give details, give me Hotels options list with HotelName, Hotel address, 
 Price, hotel image url, geo coordinates, rating, descriptions and suggest itinerary with placeName, Place Details, 
@@ -88,7 +88,7 @@ export async function POST( req: NextRequest){
     try {
         const completion = await openai.chat.completions.create({
             // 💡 FIX: Using the model name that was previously working for network stability
-            model: 'openai/gpt-3.5-turbo', 
+            model: 'meta-llama/llama-3.1-8b-instruct', 
             messages: [
                 {
                     role: 'system',
