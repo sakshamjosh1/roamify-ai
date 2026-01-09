@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
 import { Send } from "lucide-react";
@@ -24,15 +24,48 @@ type Message = {
   ui?: string;
 };
 
-type TripInfo = {
+export type TripInfo = {
   budget: string;
   destination: string;
   duration: string;
   group_size: string;
   origin: string;
-  hotels: any;
-  itinerary: any;
+  hotels: Hotel[];
+  itinerary: Itinerary;
 };
+
+export type Hotel={
+  hotel_name:string;
+  hotel_address:string;
+  price_per_night:string;
+  geo_coordinates: {
+    latitude:number;
+    longitude:number;
+  };
+  rating:number;
+  description: string;
+};
+
+export type Activity={
+  place_name: string;
+  place_details: string;
+  place_image_url: string;
+  geo_coordinates: {
+    latitude: number;
+    longitude: number;
+  };
+  place_address: string;
+  ticket_pricing: string;
+  time_travel_each_location: string;
+  best_time_to_visit: string;
+}
+
+type Itinerary={
+  day:number;
+  day_plan:string;
+  best_time_to_visit_day: string;
+  activities: Activity[];
+}
 
 // ---------------- Helpers ----------------
 
@@ -78,6 +111,9 @@ export default function Chatbox() {
   >("idle");
   const [changeSummary, setChangeSummary] = useState<string | null>(null);
 
+  // Add a loading state
+  const [isLoading, setIsLoading] = useState(false);
+
   // Clerk
   const { user, isLoaded } = useUser();
 
@@ -96,6 +132,8 @@ export default function Chatbox() {
     const newMsg: Message = { role: "user", content: input };
     const history = [...messages, newMsg];
     setMessages(history);
+
+    setIsLoading(true); // Start loading
 
     try {
       const res = await axios.post("/api/aimodel", {
@@ -167,16 +205,22 @@ export default function Chatbox() {
 
       await saveTripDetail(finalArgs);
 
-      // ✅ User-facing confirmation
-      setMessages((prev) => [
-        ...prev,
-        {
-          role: "assistant",
-          content: isUpdate
-            ? "✨ Itinerary updated! Your changes have been saved."
-            : "✅ Trip created successfully!",
-        },
-      ]);
+      // Ensure only one 'final' message is added
+      setMessages((prev) => {
+        const hasFinalMessage = prev.some((msg) => msg.ui === "final");
+        if (hasFinalMessage) return prev;
+
+        return [
+          ...prev,
+          {
+            role: "assistant",
+            content: isUpdate
+              ? "✨ Itinerary updated! Your changes have been saved."
+              : "✅ Trip created successfully!",
+            ui: "final",
+          },
+        ];
+      });
 
       console.log("✅ Trip saved to Convex");
     } catch (err) {
@@ -189,6 +233,8 @@ export default function Chatbox() {
             "Saved the itinerary locally but failed to persist it to the database.",
         },
       ]);
+    } finally {
+      setIsLoading(false); // Stop loading
     }
   };
 
@@ -228,6 +274,18 @@ export default function Chatbox() {
     if (isFinal && userInput) onSend();
   }, [isFinal]);
 
+  const messagesEndRef = useRef<HTMLDivElement | null>(null);
+
+  // Add a function to scroll to the bottom
+  const scrollToBottom = () => {
+    messagesEndRef.current?.scrollIntoView({ behavior: "smooth", block: "nearest" });
+  };
+
+  // Use useEffect to trigger scrolling when messages change
+  useEffect(() => {
+    scrollToBottom();
+  }, [messages]);
+
   // ---------------- Render ----------------
   return (
     <div className="h-[85vh] flex flex-col">
@@ -235,7 +293,7 @@ export default function Chatbox() {
         <EmptyState onSelectOption={onSend} />
       )}
 
-      <section className="flex-1 overflow-y-auto p-4">
+      <section className="flex-1 overflow-y-auto p-4" style={{ maxHeight: "calc(85vh - 100px)", overflowY: "auto" }}>
         {messages.map((msg, i) =>
           msg.role === "user" ? (
             <div key={i} className="flex justify-end mt-4">
@@ -252,6 +310,34 @@ export default function Chatbox() {
             </div>
           )
         )}
+        {isLoading && (
+          <div className="flex justify-start mt-4">
+            <div className="bg-gray-100 px-4 py-2 rounded-xl flex items-center">
+              <svg
+                className="animate-spin h-5 w-5 mr-2 text-gray-500"
+                xmlns="http://www.w3.org/2000/svg"
+                fill="none"
+                viewBox="0 0 24 24"
+              >
+                <circle
+                  className="opacity-25"
+                  cx="12"
+                  cy="12"
+                  r="10"
+                  stroke="currentColor"
+                  strokeWidth="4"
+                ></circle>
+                <path
+                  className="opacity-75"
+                  fill="currentColor"
+                  d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z"
+                ></path>
+              </svg>
+              thinking...
+            </div>
+          </div>
+        )}
+        <div ref={messagesEndRef} /> {/* Add this div to mark the end of messages */}
       </section>
 
       <section className="p-2">
