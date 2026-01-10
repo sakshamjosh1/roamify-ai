@@ -9,7 +9,7 @@ function page() {
 
     <div>
         <Header/>
-        <div className='grid grid-cols-1 md:grid-cols-3 gap-5 p-10'>
+        <div className='grid grid-cols-1 md:grid-cols-3 gap-5 p-8 h-1'>
             <div>
                 <Chatbox/>
             </div>
