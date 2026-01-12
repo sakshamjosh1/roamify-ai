@@ -4,6 +4,8 @@ import { createContext, useContext, useEffect, useState } from "react";
 import { useUser } from "@clerk/nextjs";
 import { useMutation } from "convex/react";
 import { api } from "@/convex/_generated/api";
+import { TripContextType, TripDetailContext } from "@/context/TripDetailContext";
+import { TripInfo } from "./create-new-trip/_components/Chatbox";
 
 type UserDetailType = {
   _id: string;
@@ -23,6 +25,7 @@ export const UserDetailProvider = ({ children }: { children: React.ReactNode }) 
   const { user, isLoaded } = useUser();
   const createUser = useMutation(api.user.createNewUser);
   const [userDetail, setUserDetail] = useState<UserDetailType>(null);
+  const [tripDetailInfo, setTripDetailInfo] = useState<TripInfo | null>(null);
 
   useEffect(() => {
     if (!isLoaded || !user) return;
@@ -43,7 +46,9 @@ export const UserDetailProvider = ({ children }: { children: React.ReactNode }) 
 
   return (
     <UserDetailContext.Provider value={{ userDetail }}>
+      <TripDetailContext.Provider value={{tripDetailInfo,setTripDetailInfo}}>
       {children}
+      </TripDetailContext.Provider>
     </UserDetailContext.Provider>
   );
 };
@@ -55,3 +60,8 @@ export const useUserDetail = () => {
   }
   return ctx;
 };
+
+
+export const useTripDetail = ():TripContextType | undefined => {
+  return useContext(TripDetailContext)
+}

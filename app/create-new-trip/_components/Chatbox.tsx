@@ -16,6 +16,7 @@ import { useMutation, useQuery } from "convex/react";
 import { api } from "@/convex/_generated/api";
 import { v4 as uuidv4 } from "uuid";
 import { useUser } from "@clerk/nextjs";
+import { useTripDetail } from "@/app/provider";
 
 // ---------------- Types ----------------
 type Message = {
@@ -104,6 +105,8 @@ export default function Chatbox() {
   const [userInput, setUserInput] = useState("");
   const [isFinal, setIsFinal] = useState(false);
   const [tripDetail, setTripDetail] = useState<TripInfo | undefined>();
+  //@ts-ignore
+  const {tripDetailInfo, setTripDetailInfo} = useTripDetail();
 
   // ✅ NEW (safe, additive)
   const [tripStatus, setTripStatus] = useState<
@@ -144,6 +147,8 @@ export default function Chatbox() {
       const plan = res.data.trip_plan || null;
 
       console.log("AI response:", res.data);
+
+      setTripDetailInfo(res?.data?.trip_plan)
 
       if (!isFinal) {
         setMessages((prev) => [
@@ -288,7 +293,7 @@ export default function Chatbox() {
 
   // ---------------- Render ----------------
   return (
-    <div className="h-[85vh] flex flex-col">
+    <div className="h-[85vh] flex flex-col border shadow rounded-2xl ">
       {messages.length === 0 && (
         <EmptyState onSelectOption={onSend} />
       )}
@@ -341,10 +346,11 @@ export default function Chatbox() {
       </section>
 
       <section className="p-2">
-        <div className="border rounded-2xl p-4 relative">
+        <div className="border rounded-2xl p-4 relative flex items-center">
           <Textarea
             placeholder="Create a trip from Paris to New York"
             value={userInput}
+            className="pr-12 resize-none"
             onChange={(e) => setUserInput(e.target.value)}
             onKeyDown={(e) => {
               if (e.key === "Enter" && !e.shiftKey) {
@@ -355,7 +361,7 @@ export default function Chatbox() {
           />
           <Button
             size="icon"
-            className="absolute bottom-4 right-4"
+            className="absolute right-7 inset-y-0 my-auto"
             onClick={() => onSend()}
           >
             <Send size={16} />

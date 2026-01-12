@@ -21,7 +21,10 @@ export async function POST(req:NextRequest){
             textQuery:placeName
         }, config);
 
-        return NextResponse.json(result?.data);
+        const placeRefName= result?.data?.places[0]?.photos[0]?.name
+        const PhotoRefURL=`https://places.googleapis.com/v1/${placeRefName}/media?maxHeightPx=1000&maxWidthPx=1000&key=${process.env.GOOGLE_PLACE_API_KEY}`
+
+        return NextResponse.json(PhotoRefURL);
     }
     catch(e){
         return NextResponse.json({error: e})
