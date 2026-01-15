@@ -3,6 +3,8 @@
 import { NextRequest, NextResponse } from "next/server";
 
 import OpenAI from 'openai';
+import { aj } from "../arcjet/route";
+import { currentUser } from "@clerk/nextjs/server";
 export const openai = new OpenAI({
     baseURL: 'https://openrouter.ai/api/v1',
     apiKey: process.env.OPENROUTER_API_KEY,
@@ -26,13 +28,15 @@ You MUST follow these rules for EVERY response:
    - 5. Trip duration (ui: 'TripDuration')
    - 6. Travel interests (ui: 'text')
    - 7. Special requirements (ui: 'text')
-4. When all information is collected, set 'ui' to 'final' and provide the trip plan in the 'resp' field.
-;`
+4. When all information is collected, set 'ui' to 'final' and provide the trip plan in the 'resp' field.`
 
-const FINAL_PROMPT = `Generate Travel Plan with give details, give me Hotels options list with HotelName, Hotel address, 
-Price, hotel image url, geo coordinates, rating, descriptions and suggest itinerary with placeName, Place Details, 
-Place Image Url, Geo Coordinates, Place address, ticket Pricing, Time travel each of the location , 
-with each day plan with best time to visit in JSON format. 
+const FINAL_PROMPT = `HARD REQUIREMENTS:
+- You MUST return at least 3 hotels in "hotels".
+- You MUST generate itinerary entries for EVERY day in "duration".
+- Each day MUST contain at least 3 activities.
+- Do NOT skip any day.
+- Do NOT return partial results.
+- Output ONLY valid JSON. No text outside JSON.
 Output Schema:
 {
   "trip_plan": {
@@ -82,6 +86,19 @@ Output Schema:
 
 export async function POST( req: NextRequest){
     const {messages, isFinal} = await req.json();
+    const user=await currentUser();
+    const decision = await aj.protect(req, { userId:user?.primaryEmailAddress?.emailAddress??'', requested: isFinal ? 5 : 0 });
+
+    console.log(decision);
+    //@ts-ignore
+    if(decision?.reason?.remaining==0){
+      return NextResponse.json({
+        resp:'Your Daily Limit Reached',
+        ui:'limit'
+      },
+      
+    );
+    }
 
     // Removed the explicit API key check as the error likely lies elsewhere based on your feedback.
 
