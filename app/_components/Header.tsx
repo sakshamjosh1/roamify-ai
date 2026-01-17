@@ -3,7 +3,7 @@ import React from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
-import { SignInButton, useUser } from '@clerk/nextjs';
+import { SignInButton, UserButton, useUser } from '@clerk/nextjs';
 import { InteractiveHoverButton } from "@/components/magicui/interactive-hover-button";
 
 const menuOptions = [
@@ -42,7 +42,8 @@ function Header() {
       </div>
 
       {/* Get Started / Create New Trip */}
-      {isLoaded && (
+      <div className='flex gap-5 items-center'>
+        {isLoaded && (
         !user ? (
           <SignInButton mode='modal'>
             <InteractiveHoverButton className='hover:cursor-pointer'>Get Started</InteractiveHoverButton>
@@ -53,6 +54,9 @@ function Header() {
           </Link>
         )
       )}
+      <UserButton/>
+      </div>
+      
     </div>
   );
 }
