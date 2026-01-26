@@ -27,17 +27,35 @@ export const createTripDetail = mutation({
   },
 });
 
-
-export const GetUserTrips=query({
-  args:{
-    uid:v.id('UserTable')
+export const GetTripById = query({
+  args: {
+    uid: v.id("UserTable"),
+    tripid: v.string(),
   },
-  handler:async(convexToJson,args)=>{
-    const result=await convexToJson.db.query('TripDetailTable')
-    .filter(q=>q.eq(q.field('uid'),args.uid))
-    .order('desc')
-    .collect();
+  handler: async (ctx, args) => {
+    const result = await ctx.db
+      .query("TripDetailTable")
+      .filter((q) =>
+        q.and(
+          q.eq(q.field("uid"), args.uid),
+          q.eq(q.field("tripId"), args.tripid)
+        )
+      )
+      .collect();
 
-    return result;
-  }
-})
+    return result[0]; // Return the first matching trip
+  },
+});
+
+export const GetUserTrips = query({
+  args: {
+    uid: v.id("UserTable"),
+  },
+  handler: async (ctx, args) => {
+    return await ctx.db
+      .query("TripDetailTable")
+      .filter((q) => q.eq(q.field("uid"), args.uid))
+      .collect();
+  },
+});
+

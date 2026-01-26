@@ -1,0 +1,12 @@
+{
+  "functions": {
+    "tripDetail": {
+      "GetTripById": {
+        "type": "query"
+      },
+      "createTripDetail": {
+        "type": "mutation"
+      }
+    }
+  }
+}

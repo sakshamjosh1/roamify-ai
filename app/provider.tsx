@@ -17,6 +17,7 @@ type UserDetailType = {
 
 type UserDetailContextType = {
   userDetail: UserDetailType;
+  setUserDetail: (detail: UserDetailType) => void; // Add this line
 };
 
 const UserDetailContext = createContext<UserDetailContextType | undefined>(undefined);
@@ -45,9 +46,9 @@ export const UserDetailProvider = ({ children }: { children: React.ReactNode }) 
   }, [isLoaded, user, createUser]);
 
   return (
-    <UserDetailContext.Provider value={{ userDetail }}>
-      <TripDetailContext.Provider value={{tripDetailInfo,setTripDetailInfo}}>
-      {children}
+    <UserDetailContext.Provider value={{ userDetail, setUserDetail }}>
+      <TripDetailContext.Provider value={{ tripDetailInfo, setTripDetailInfo }}>
+        {children}
       </TripDetailContext.Provider>
     </UserDetailContext.Provider>
   );
@@ -61,7 +62,10 @@ export const useUserDetail = () => {
   return ctx;
 };
 
-
-export const useTripDetail = ():TripContextType | undefined => {
-  return useContext(TripDetailContext)
-}
+export const useTripDetail = (): TripContextType => {
+  const ctx = useContext(TripDetailContext);
+  if (!ctx) {
+    throw new Error("useTripDetail must be used within a TripDetailProvider");
+  }
+  return ctx;
+};

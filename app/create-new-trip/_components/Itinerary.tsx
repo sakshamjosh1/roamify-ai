@@ -11,8 +11,8 @@ import { div } from "motion/react-client";
 import { ArrowLeft } from "lucide-react";
 
 function Itinerary() {
-  // @ts-ignore
-  const { tripDetailInfo } = useTripDetail();
+  //@ts-ignore
+  const { tripDetailInfo, setTripDetailInfo } = useTripDetail();
   const [tripData, setTripData] = useState<TripInfo | null>(null);
 
   useEffect(() => {
