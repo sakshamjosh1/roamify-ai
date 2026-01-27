@@ -61,7 +61,7 @@ export type Activity={
   best_time_to_visit: string;
 }
 
-type Itinerary={
+export type Itinerary={
   day:number;
   day_plan:string;
   best_time_to_visit_day: string;

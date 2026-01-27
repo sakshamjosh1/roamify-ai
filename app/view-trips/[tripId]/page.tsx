@@ -1,6 +1,7 @@
 "use client";
 
 import Header from "@/app/_components/Header";
+import GlobalMap from "@/app/create-new-trip/_components/GlobalMap";
 import Itinerary from "@/app/create-new-trip/_components/Itinerary";
 import { useTripDetail, useUserDetail } from "@/app/provider";
 import { api } from "@/convex/_generated/api";
@@ -15,7 +16,7 @@ function ViewTrip() {
     : params.tripId;
 
   const { userDetail } = useUserDetail();
-  const { setTripDetailInfo } = useTripDetail();
+  const { tripDetailInfo,setTripDetailInfo } = useTripDetail();
   const convex = useConvex();
 
   useEffect(() => {
@@ -41,7 +42,16 @@ function ViewTrip() {
   return (
     <>
       <Header />
-      <Itinerary />
+      <div className="grid grid-cols-5">
+        <div className="col-span-3">
+          <Itinerary />
+        </div>
+        <div className="col-span-2">
+          <GlobalMap/>
+        </div>
+        
+      </div>
+      
     </>
   );
 }
