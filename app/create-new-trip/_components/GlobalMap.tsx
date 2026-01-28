@@ -8,6 +8,8 @@ import { Activity, Itinerary } from './Chatbox';
 function GlobalMap() {
 
   const mapContainerRef=useRef(null);
+  const mapRef = useRef<mapboxgl.Map | null>(null); // Define mapRef
+
   const { tripDetailInfo,setTripDetailInfo } = useTripDetail();
 
   useEffect(() => {
@@ -20,6 +22,8 @@ function GlobalMap() {
       zoom: 1.7, // starting zoom
       projection: 'globe',
     });
+
+    mapRef.current = map; // Assign map instance to mapRef
 
     const markers: mapboxgl.Marker[] = [];
 
@@ -39,13 +43,28 @@ function GlobalMap() {
               new mapboxgl.Popup({ offset: 25 }).setText(activity.place_name)
             )
             .addTo(map);
-
           markers.push(marker);
         } else {
           console.warn('Invalid coordinates for activity:', activity); // Debugging log
         }
       });
     });
+
+    // Optionally, focus on the first activity if available
+    if (itineraries.length > 0 && itineraries[0].activities?.length > 0) {
+      const firstActivity = itineraries[0].activities[0];
+      if (firstActivity?.geo_coordinates?.longitude && firstActivity?.geo_coordinates?.latitude) {
+        const coordinates = [
+          firstActivity.geo_coordinates.longitude,
+          firstActivity.geo_coordinates.latitude,
+        ] as [number, number];
+        map.flyTo({
+          center: coordinates,
+          zoom: 7,
+          essential: true,
+        });
+      }
+    }
 
     return () => {
       // Clean up markers when the component unmounts
