@@ -1,4 +1,4 @@
-# 🌍 RoamifyAI : AI-Powered Trip Planning Platform
+# ![logo.png](public/logo.png) RoamifyAI : AI-Powered Trip Planning Platform
 
 RoamifyAI is a full-stack AI travel planning application that helps users create personalized travel itineraries through a conversational chat interface.
 It combines AI, real-time backend, maps, and modern frontend architecture, while being designed to scale with DevOps and cloud deployments in mind.
