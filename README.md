@@ -1,4 +1,11 @@
-# <img src="public/logo.png" alt="RoamifyAI Logo" width="64" height="64" /> RoamifyAI : AI-Powered Trip Planning Platform
+<h1 align="center">
+  <img src="public/logo.png" alt="RoamifyAI Logo" width="48" height="48" />
+  RoamifyAI
+</h1>
+
+<p align="center">
+  <b>AI-Powered Trip Planning Platform</b>
+</p>
 
 RoamifyAI is a full-stack AI travel planning application that helps users create personalized travel itineraries through a conversational chat interface.
 It combines AI, real-time backend, maps, and modern frontend architecture, while being designed to scale with DevOps and cloud deployments in mind.
