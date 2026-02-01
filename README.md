@@ -106,4 +106,3 @@ Please make sure to update tests as appropriate.
 
 Saksham
 Computer Science Student
-Building AI + Full-Stack + DevOps projects
