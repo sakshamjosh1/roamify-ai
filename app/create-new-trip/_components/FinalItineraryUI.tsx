@@ -1,46 +1,50 @@
-import React from 'react';
-import { PlaneTakeoff, CheckCircle, Loader2 } from 'lucide-react';
+import React from "react";
+import { PlaneTakeoff, CheckCircle, Loader2 } from "lucide-react";
+import { useTripDetail } from "@/app/provider";
+
 
 interface FinalItineraryUIProps {
   planningText: string;
   isTripReady: boolean;
-  onViewTrip: () => void;
-  onSelectedOption: (value: string) => void;
+
+  // ✅ NEW PROPS (required to satisfy Chatbox.tsx)
+  tripStatus: "idle" | "created" | "updated";
+  changeSummary: string | null;
 }
 
 function FinalItineraryUI({
   planningText,
   isTripReady,
-  onViewTrip,
-  onSelectedOption
+  tripStatus,
+  changeSummary,
 }: FinalItineraryUIProps) {
-
   const primaryColorHex = "#4f46e5"; // Indigo 600
   const primaryBgHoverClass = "hover:bg-indigo-700";
-
+  const { setViewMode } = useTripDetail();
   const IconComponent = isTripReady ? CheckCircle : PlaneTakeoff;
   const titleText = isTripReady ? "Trip Ready!" : "Planning your dream trip...";
   const descriptionText = isTripReady
     ? "Click below to explore your personalized, detailed itinerary."
     : "Gathering best destinations, activities, and travel details for you.";
 
-  const iconClasses = `text-4xl w-10 h-10 text-indigo-600 ${isTripReady ? 'animate-none' : 'animate-bounce'}`;
+  const iconClasses = `text-4xl w-10 h-10 text-indigo-600 ${
+    isTripReady ? "animate-none" : "animate-bounce"
+  }`;
 
   const buttonClasses = `
     w-full max-w-[250px] py-3 text-lg font-semibold text-white 
     rounded-xl shadow-xl transition duration-150 ease-in-out
-    ${isTripReady 
-      ? `${primaryBgHoverClass} hover:scale-[1.02]`
-      : 'bg-gray-400 cursor-not-allowed shadow-none'
+    ${
+      isTripReady
+        ? `${primaryBgHoverClass} hover:scale-[1.02]`
+        : "bg-gray-400 cursor-not-allowed shadow-none"
     }
   `;
 
   const handleViewTripClick = () => {
-    if (isTripReady) {
-      onSelectedOption("View Trip Itinerary Now");
-      onViewTrip();
-    }
-  };
+    if (!isTripReady) return;
+      setViewMode("itinerary");
+    };
 
   return (
     <div className="mt-4 w-full">
@@ -55,13 +59,11 @@ function FinalItineraryUI({
           <IconComponent className={iconClasses} />
         </div>
 
-        <h3 className="text-2xl font-bold mb-2 flex items-center justify-center text-indigo-600">
+        <h3 className="text-2xl font-bold mb-2 text-indigo-600">
           {titleText}
         </h3>
 
-        <p className="text-gray-500 mb-6 max-w-xs">
-          {descriptionText}
-        </p>
+        <p className="text-gray-500 mb-6 max-w-xs">{descriptionText}</p>
 
         {/* View Trip Button */}
         <button
@@ -70,17 +72,21 @@ function FinalItineraryUI({
           className={buttonClasses}
           style={{
             backgroundColor: isTripReady ? primaryColorHex : undefined,
-            boxShadow: isTripReady ? `0 8px 15px 0px rgba(79, 70, 229, 0.4)` : 'none'
+            boxShadow: isTripReady
+              ? "0 8px 15px 0px rgba(79, 70, 229, 0.4)"
+              : "none",
           }}
         >
           View Trip Itinerary
         </button>
 
-        {/* Live Loading Indicator while planning */}
+        {/* Live Loading Indicator */}
         {!isTripReady && (
           <div className="w-full mt-4 flex justify-center items-center">
             <Loader2 className="h-5 w-5 animate-spin text-indigo-400 mr-2" />
-            <span className="text-sm text-gray-500">Generating itinerary...</span>
+            <span className="text-sm text-gray-500">
+              Generating itinerary...
+            </span>
           </div>
         )}
       </div>

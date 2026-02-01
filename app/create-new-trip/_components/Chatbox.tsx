@@ -32,7 +32,7 @@ export type TripInfo = {
   group_size: string;
   origin: string;
   hotels: Hotel[];
-  itinerary: Itinerary;
+  itinerary: Itinerary[];
 };
 
 export type Hotel={
@@ -256,11 +256,10 @@ export default function Chatbox() {
         <FinalItineraryUI
           planningText={last?.content ?? "Planning your trip..."}
           isTripReady={!!tripDetail}
-          tripStatus={tripStatus}        // ✅ NEW
-          changeSummary={changeSummary}  // ✅ NEW
-          onViewTrip={() => console.log("View Trip")}
-          onSelectedOption={onSend}
+          tripStatus={tripStatus}
+          changeSummary={changeSummary}
         />
+
       );
     }
     return null;

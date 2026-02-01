@@ -5,10 +5,8 @@ import { TripInfo } from '@/app/create-new-trip/_components/Chatbox';
 import axios from 'axios';
 import Link from 'next/link';
 type Trip = {
-    tripId: string;
-    tripDetail: {
-        destination: string;
-    };
+  tripId: string;
+  tripDetail: TripInfo;
 };
 
 type Props = {

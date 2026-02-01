@@ -1,5 +1,5 @@
 "use client";
-
+import { Id } from "@/convex/_generated/dataModel";
 import React, { useEffect, useState } from "react";
 import Header from "../_components/Header";
 import Link from "next/link";
@@ -31,7 +31,7 @@ function MyTrips() {
   if (!userDetail?._id) return;
 
   const result = await convex.query(api.tripDetail.GetUserTrips, {
-    uid: userDetail._id,
+    uid: userDetail._id as Id<"UserTable">,
   });
 
   setMyTrips(result);

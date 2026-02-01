@@ -1,5 +1,5 @@
 "use client";
-
+import { Id } from "@/convex/_generated/dataModel";
 import Header from "@/app/_components/Header";
 import GlobalMap from "@/app/create-new-trip/_components/GlobalMap";
 import Itinerary from "@/app/create-new-trip/_components/Itinerary";
@@ -9,6 +9,7 @@ import { useConvex } from "convex/react";
 import { useParams } from "next/navigation";
 import React, { useEffect } from "react";
 
+
 function ViewTrip() {
   const params = useParams();
   const tripId = Array.isArray(params.tripId)
@@ -16,7 +17,7 @@ function ViewTrip() {
     : params.tripId;
 
   const { userDetail } = useUserDetail();
-  const { tripDetailInfo,setTripDetailInfo } = useTripDetail();
+  const { tripDetailInfo, setTripDetailInfo, viewMode } = useTripDetail();
   const convex = useConvex();
 
   useEffect(() => {
@@ -31,8 +32,8 @@ function ViewTrip() {
 
   const getTrip = async (id: string) => {
   const result = await convex.query(api.tripDetail.GetTripById, {
-    uid: userDetail!._id,
-    tripid: tripId,
+    uid: userDetail!._id as Id<"UserTable">,
+    tripid: id,
   });
 
   setTripDetailInfo(result?.tripDetail ?? null);
@@ -43,12 +44,10 @@ function ViewTrip() {
     <>
       <Header />
       <div className="grid grid-cols-5">
-        <div className="col-span-3">
-          <Itinerary />
+        <div className="col-span-5">
+          {viewMode === "itinerary" ? <Itinerary /> : <GlobalMap />}
         </div>
-        <div className="col-span-2">
-          <GlobalMap/>
-        </div>
+
         
       </div>
       

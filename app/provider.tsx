@@ -22,11 +22,14 @@ type UserDetailContextType = {
 
 const UserDetailContext = createContext<UserDetailContextType | undefined>(undefined);
 
+
 export const UserDetailProvider = ({ children }: { children: React.ReactNode }) => {
   const { user, isLoaded } = useUser();
   const createUser = useMutation(api.user.createNewUser);
   const [userDetail, setUserDetail] = useState<UserDetailType>(null);
   const [tripDetailInfo, setTripDetailInfo] = useState<TripInfo | null>(null);
+  const [viewMode, setViewMode] = useState<"map" | "itinerary">("map");
+
 
   useEffect(() => {
     if (!isLoaded || !user) return;
@@ -45,11 +48,21 @@ export const UserDetailProvider = ({ children }: { children: React.ReactNode }) 
     syncUser();
   }, [isLoaded, user, createUser]);
 
+
+
   return (
     <UserDetailContext.Provider value={{ userDetail, setUserDetail }}>
-      <TripDetailContext.Provider value={{ tripDetailInfo, setTripDetailInfo }}>
-        {children}
-      </TripDetailContext.Provider>
+      <TripDetailContext.Provider
+  value={{
+    tripDetailInfo,
+    setTripDetailInfo,
+    viewMode,
+    setViewMode,
+  }}
+>
+  {children}
+</TripDetailContext.Provider>
+
     </UserDetailContext.Provider>
   );
 };
