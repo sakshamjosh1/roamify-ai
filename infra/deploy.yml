@@ -1,0 +1,51 @@
+---
+- name: Configure EC2 and Deploy RoamifyAI
+  hosts: web
+  become: yes
+
+  tasks:
+
+    - name: Update apt packages
+      apt:
+        update_cache: yes
+
+    - name: Install Docker
+      apt:
+        name: docker.io
+        state: present
+
+    - name: Start Docker service
+      service:
+        name: docker
+        state: started
+        enabled: yes
+
+    - name: Add ubuntu user to docker group
+      user:
+        name: ubuntu
+        groups: docker
+        append: yes
+
+    - name: Copy environment file to server
+      copy:
+        src: secrets.env
+        dest: /home/ubuntu/.env
+        owner: ubuntu
+        group: ubuntu
+        mode: '0600'
+
+    - name: Pull latest Docker image
+      command: docker pull sakshamjoshii/roamifyai:latest
+
+    - name: Stop existing container if running
+      command: docker rm -f roamify
+      ignore_errors: yes
+
+    - name: Run Roamify container
+      command: >
+        docker run -d
+        -p 80:3000
+        --env-file /home/ubuntu/.env
+        --name roamify
+        --restart always
+        sakshamjoshii/roamifyai:latest
