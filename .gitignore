@@ -39,3 +39,14 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+#terraform
+.terraform/
+*.tfstate.*
+*.tfstate
+crash.log
+
+#keys
+*.pem
+roamify-keys
+roamify-keky.pub
