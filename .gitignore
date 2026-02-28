@@ -48,5 +48,5 @@ crash.log
 
 #keys
 *.pem
-roamify-keys
-roamify-keky.pub
+roamify-key
+roamify-key.pub
