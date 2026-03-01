@@ -1,0 +1,54 @@
+name: CI/CD - RoamifyAI
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Log in to Docker Hub
+        uses: docker/login-action@v3
+        with:
+          username: ${{ secrets.DOCKER_USERNAME }}
+          password: ${{ secrets.DOCKER_PASSWORD }}
+
+      - name: Build Docker image
+        run: |
+          docker build \
+            --build-arg NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY=${{ secrets.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY }} \
+            --build-arg NEXT_PUBLIC_CONVEX_URL=${{ secrets.NEXT_PUBLIC_CONVEX_URL }} \
+            --build-arg NEXT_PUBLIC_MAPBOX_API_KEY=${{ secrets.NEXT_PUBLIC_MAPBOX_API_KEY }} \
+            -t ${{ secrets.DOCKER_USERNAME }}/roamifyai:latest .
+
+      - name: Push Docker image
+        run: |
+          docker push ${{ secrets.DOCKER_USERNAME }}/roamifyai:latest
+
+      - name: Deploy to EC2
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: ${{ secrets.EC2_HOST }}
+          username: ${{ secrets.EC2_USER }}
+          key: ${{ secrets.EC2_SSH_KEY }}
+          script: |
+            docker pull ${{ secrets.DOCKER_USERNAME }}/roamifyai:latest
+            docker rm -f roamify || true
+            docker run -d \
+              -p 80:3000 \
+              -e CLERK_SECRET_KEY='${{ secrets.CLERK_SECRET_KEY }}' \
+              -e NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY='${{ secrets.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY }}' \
+              -e NEXT_PUBLIC_CONVEX_URL='${{ secrets.NEXT_PUBLIC_CONVEX_URL }}' \
+              -e NEXT_PUBLIC_MAPBOX_API_KEY='${{ secrets.NEXT_PUBLIC_MAPBOX_API_KEY }}' \
+              -e ARCJET_KEY='${{ secrets.ARCJET_KEY }}' \
+              -e GOOGLE_PLACES_API_KEY='${{ secrets.GOOGLE_PLACES_API_KEY }}' \
+              --name roamify \
+              --restart always \
+              ${{ secrets.DOCKER_USERNAME }}/roamifyai:latest
