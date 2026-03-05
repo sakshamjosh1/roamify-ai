@@ -1,92 +1,174 @@
 "use client";
 
-import React from "react";
-import { Carousel, Card } from "@/components/ui/apple-cards-carousel";
+import React, { useRef } from "react";
+import { MapPin, Clock, Wallet, ChevronLeft, ChevronRight } from "lucide-react";
+import { useRouter } from "next/navigation";
+import { useUser } from "@clerk/nextjs";
+
+const data = [
+  {
+    category: "France",
+    city: "Paris",
+    title: "City of Lights",
+    duration: "5–7 days",
+    budget: "₹80k–₹1.2L",
+    bestTime: "Apr–Jun",
+    emoji: "🗼",
+    src: "https://images.unsplash.com/photo-1502602898657-3e91760cbb34?q=80&w=2600&auto=format&fit=crop",
+  },
+  {
+    category: "USA",
+    city: "New York",
+    title: "The City That Never Sleeps",
+    duration: "6–8 days",
+    budget: "₹1L–₹1.6L",
+    bestTime: "Sep–Nov",
+    emoji: "🗽",
+    src: "https://plus.unsplash.com/premium_photo-1661954654458-c673671d4a08?q=80&w=1170&auto=format&fit=crop",
+  },
+  {
+    category: "Japan",
+    city: "Tokyo",
+    title: "Where Tradition Meets Future",
+    duration: "7–10 days",
+    budget: "₹90k–₹1.4L",
+    bestTime: "Mar–May",
+    emoji: "🌸",
+    src: "https://images.unsplash.com/photo-1522547902298-51566e4fb383?q=80&w=735&auto=format&fit=crop",
+  },
+  {
+    category: "Italy",
+    city: "Rome",
+    title: "The Eternal City",
+    duration: "4–6 days",
+    budget: "₹70k–₹1.1L",
+    bestTime: "Apr–Jun",
+    emoji: "🏛️",
+    src: "https://plus.unsplash.com/premium_photo-1675975678457-d70708bf77c8?q=80&w=1170&auto=format&fit=crop",
+  },
+  {
+    category: "UAE",
+    city: "Dubai",
+    title: "Luxury in the Desert",
+    duration: "4–5 days",
+    budget: "₹80k–₹1.5L",
+    bestTime: "Nov–Mar",
+    emoji: "🏙️",
+    src: "https://images.unsplash.com/photo-1526495124232-a04e1849168c?q=80&w=687&auto=format&fit=crop",
+  },
+  {
+    category: "India",
+    city: "Rajasthan",
+    title: "Land of Maharajas",
+    duration: "8–10 days",
+    budget: "₹30k–₹70k",
+    bestTime: "Oct–Mar",
+    emoji: "🏯",
+    src: "https://images.unsplash.com/photo-1524492412937-b28074a5d7da?q=80&w=1171&auto=format&fit=crop",
+  },
+];
 
 export function PopularCityList() {
-  const cards = data.map((card, index) => (
-    <Card key={card.src} card={card} index={index} />
-  ));
+  const scrollRef = useRef<HTMLDivElement>(null);
+  const router = useRouter();
+  const { user } = useUser();
+
+  const scroll = (dir: "left" | "right") => {
+    if (!scrollRef.current) return;
+    scrollRef.current.scrollBy({ left: dir === "right" ? 340 : -340, behavior: "smooth" });
+  };
+
+  const handlePlan = (city: string) => {
+    if (!user) { router.push("/sign-in"); return; }
+    router.push(`/create-new-trip?prompt=Plan a trip to ${city}`);
+  };
 
   return (
-    <div className="w-full h-full pt-20">
-      <h2 className="max-w-7xl pl-4 mx-auto text-xl md:text-3xl font-bold text-neutral-800 dark:text-neutral-200 font-sans">
-        Popular Destinations
-      </h2>
-      <Carousel items={cards} />
+    <div className="w-full pt-20 pb-10 px-6">
+
+      {/* Header row */}
+      <div className="max-w-7xl mx-auto flex items-end justify-between mb-8">
+        <div>
+          <p className="text-xs tracking-[0.2em] uppercase text-gray-400 mb-1">Explore the world</p>
+          <h2 className="text-3xl font-bold text-gray-900">Popular Destinations</h2>
+        </div>
+        {/* Scroll buttons */}
+        <div className="flex gap-2">
+          <button
+            onClick={() => scroll("left")}
+            className="w-9 h-9 flex items-center justify-center border border-gray-200 rounded-full hover:border-gray-900 hover:bg-gray-900 hover:text-white transition-all duration-150"
+          >
+            <ChevronLeft className="h-4 w-4" />
+          </button>
+          <button
+            onClick={() => scroll("right")}
+            className="w-9 h-9 flex items-center justify-center border border-gray-200 rounded-full hover:border-gray-900 hover:bg-gray-900 hover:text-white transition-all duration-150"
+          >
+            <ChevronRight className="h-4 w-4" />
+          </button>
+        </div>
+      </div>
+
+      {/* Scrollable row */}
+      <div
+        ref={scrollRef}
+        className="flex gap-4 overflow-x-auto scrollbar-hide pb-4 max-w-7xl mx-auto scroll-smooth"
+        style={{ scrollbarWidth: "none", msOverflowStyle: "none" }}
+      >
+        {data.map((dest) => (
+          <div
+            key={dest.city}
+            className="relative flex-shrink-0 w-64 h-[420px] rounded-2xl overflow-hidden cursor-pointer group"
+            onClick={() => handlePlan(dest.city)}
+          >
+            {/* Background image */}
+            <img
+              src={dest.src}
+              alt={dest.city}
+              className="absolute inset-0 w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
+            />
+
+            {/* Gradient overlay */}
+            <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent" />
+
+            {/* Top badge */}
+            <div className="absolute top-4 left-4">
+              <span className="bg-white/20 backdrop-blur-sm text-white text-[10px] tracking-widest uppercase px-2.5 py-1 rounded-full border border-white/20">
+                {dest.category}
+              </span>
+            </div>
+
+            {/* Emoji */}
+            <div className="absolute top-4 right-4 text-2xl">{dest.emoji}</div>
+
+            {/* Bottom content — slides up on hover */}
+            <div className="absolute bottom-0 left-0 right-0 p-5 translate-y-8 group-hover:translate-y-0 transition-transform duration-300">
+              <p className="text-white/70 text-xs tracking-wide mb-1">{dest.city}</p>
+              <h3 className="text-white font-bold text-lg leading-tight mb-4">{dest.title}</h3>
+
+              {/* Meta — hidden until hover */}
+              <div className="opacity-0 group-hover:opacity-100 transition-opacity duration-300 space-y-1.5 mb-4">
+                <div className="flex items-center gap-1.5 text-white/80 text-xs">
+                  <Clock className="h-3 w-3" /> {dest.duration}
+                </div>
+                <div className="flex items-center gap-1.5 text-white/80 text-xs">
+                  <Wallet className="h-3 w-3" /> {dest.budget}
+                </div>
+                <div className="flex items-center gap-1.5 text-white/80 text-xs">
+                  <MapPin className="h-3 w-3" /> Best time: {dest.bestTime}
+                </div>
+              </div>
+
+              {/* CTA button */}
+              <button className="w-full bg-white text-gray-900 text-xs font-semibold tracking-wide py-2.5 rounded-xl opacity-0 group-hover:opacity-100 transition-all duration-300 hover:bg-orange-500 hover:text-white">
+                Plan this trip →
+              </button>
+            </div>
+          </div>
+        ))}
+      </div>
     </div>
   );
 }
 
-const DummyContent = () => {
-  return (
-    <>
-      {[...new Array(3).fill(1)].map((_, index) => {
-        return (
-          <div
-            key={"dummy-content" + index}
-            className="bg-[#F5F5F7] dark:bg-neutral-800 p-8 md:p-14 rounded-3xl mb-4"
-          >
-            <p className="text-neutral-600 dark:text-neutral-400 text-base md:text-2xl font-sans max-w-3xl mx-auto">
-              <span className="font-bold text-neutral-700 dark:text-neutral-200">
-                The first rule of Apple club is that you boast about Apple club.
-              </span>{" "}
-              Keep a journal, quickly jot down a grocery list, and take amazing
-              class notes. Want to convert those notes to text? No problem.
-              Langotiya jeetu ka mara hua yaar is ready to capture every
-              thought.
-            </p>
-            <img
-              src="https://assets.aceternity.com/macbook.png"
-              alt="Macbook mockup from Aceternity UI"
-              height="500"
-              width="500"
-              className="md:w-1/2 md:h-1/2 h-full w-full mx-auto object-contain"
-            />
-          </div>
-        );
-      })}
-    </>
-  );
-};
-
-const data = [
-  {
-    category: "Paris, France",
-    title: "Explore the City of Lights – Eiffel Tower, Louvre & more",
-    src: "https://images.unsplash.com/photo-1502602898657-3e91760cbb34?q=80&w=2600&auto=format&fit=crop",
-    content: <DummyContent />,
-  },
-  {
-    category: "New York, USA",
-    title: "Experience NYC – Times Square, Central Park, Broadway",
-    src: "https://plus.unsplash.com/premium_photo-1661954654458-c673671d4a08?q=80&w=1170&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D",
-    content: <DummyContent />,
-  },
-  {
-    category: "Tokyo, Japan",
-    title: "Discover Tokyo – Shibuya, Cherry Blossoms, Temples",
-    src: "https://images.unsplash.com/photo-1522547902298-51566e4fb383?q=80&w=735&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D",
-    content: <DummyContent />,
-  },
-  {
-    category: "Rome, Italy",
-    title: "Walk through History – Colosseum, Vatican, Roman Forum",
-    src: "https://plus.unsplash.com/premium_photo-1675975678457-d70708bf77c8?q=80&w=1170&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D",
-    content: <DummyContent />,
-  },
-  {
-    category: "Dubai, UAE",
-    title: "Luxury and Innovation – Burj Khalifa, Desert Safari",
-    src: "https://images.unsplash.com/photo-1526495124232-a04e1849168c?q=80&w=687&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D",
-    content: <DummyContent />,
-  },
-  {
-    category: "India",
-    title: "Harbour Views – Opera House, Bondi Beach & Wildlife",
-    src: "https://images.unsplash.com/photo-1524492412937-b28074a5d7da?q=80&w=1171&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D",
-    content: <DummyContent />,
-  },
-];
-
-export default data;
+export default PopularCityList;
