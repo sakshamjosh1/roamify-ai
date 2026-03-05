@@ -42,7 +42,7 @@ jobs:
             docker pull ${{ secrets.DOCKER_USERNAME }}/roamifyai:latest
             docker rm -f roamify || true
             docker run -d \
-              -p 80:3000 \
+              -p 3000:3000 \
               -e CLERK_SECRET_KEY='${{ secrets.CLERK_SECRET_KEY }}' \
               -e NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY='${{ secrets.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY }}' \
               -e NEXT_PUBLIC_CONVEX_URL='${{ secrets.NEXT_PUBLIC_CONVEX_URL }}' \
