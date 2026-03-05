@@ -1,13 +1,10 @@
 import React from "react";
-import { PlaneTakeoff, CheckCircle, Loader2 } from "lucide-react";
+import { CheckCircle, Loader2, MapPin } from "lucide-react";
 import { useTripDetail } from "@/app/provider";
-
 
 interface FinalItineraryUIProps {
   planningText: string;
   isTripReady: boolean;
-
-  // ✅ NEW PROPS (required to satisfy Chatbox.tsx)
   tripStatus: "idle" | "created" | "updated";
   changeSummary: string | null;
 }
@@ -18,77 +15,55 @@ function FinalItineraryUI({
   tripStatus,
   changeSummary,
 }: FinalItineraryUIProps) {
-  const primaryColorHex = "#4f46e5"; // Indigo 600
-  const primaryBgHoverClass = "hover:bg-indigo-700";
   const { setViewMode } = useTripDetail();
-  const IconComponent = isTripReady ? CheckCircle : PlaneTakeoff;
-  const titleText = isTripReady ? "Trip Ready!" : "Planning your dream trip...";
-  const descriptionText = isTripReady
-    ? "Click below to explore your personalized, detailed itinerary."
-    : "Gathering best destinations, activities, and travel details for you.";
-
-  const iconClasses = `text-4xl w-10 h-10 text-indigo-600 ${
-    isTripReady ? "animate-none" : "animate-bounce"
-  }`;
-
-  const buttonClasses = `
-    w-full max-w-[250px] py-3 text-lg font-semibold text-white 
-    rounded-xl shadow-xl transition duration-150 ease-in-out
-    ${
-      isTripReady
-        ? `${primaryBgHoverClass} hover:scale-[1.02]`
-        : "bg-gray-400 cursor-not-allowed shadow-none"
-    }
-  `;
 
   const handleViewTripClick = () => {
     if (!isTripReady) return;
-      setViewMode("itinerary");
-    };
+    setViewMode("itinerary");
+  };
 
   return (
-    <div className="mt-4 w-full">
-      {/* AI Confirmation Text Bubble */}
-      <div className="bg-gray-200 text-gray-800 p-4 rounded-xl rounded-tl-sm shadow-md mb-4 whitespace-pre-wrap">
+    <div className='mt-2'>
+
+      {/* Planning text bubble */}
+      <div className='text-sm text-gray-700 bg-gray-100 px-4 py-3 rounded-xl rounded-tl-sm leading-relaxed mb-3 whitespace-pre-wrap'>
         {planningText}
       </div>
 
-      {/* Main Planning/Ready Card */}
-      <div className="bg-white p-6 rounded-2xl shadow-xl border border-gray-100 flex flex-col items-center text-center">
-        <div className="p-3 mb-4 rounded-full bg-indigo-100">
-          <IconComponent className={iconClasses} />
-        </div>
+      {/* Status card */}
+      <div className='bg-white border border-gray-200 rounded-xl p-4 flex flex-col items-center text-center'>
 
-        <h3 className="text-2xl font-bold mb-2 text-indigo-600">
-          {titleText}
-        </h3>
-
-        <p className="text-gray-500 mb-6 max-w-xs">{descriptionText}</p>
-
-        {/* View Trip Button */}
-        <button
-          onClick={handleViewTripClick}
-          disabled={!isTripReady}
-          className={buttonClasses}
-          style={{
-            backgroundColor: isTripReady ? primaryColorHex : undefined,
-            boxShadow: isTripReady
-              ? "0 8px 15px 0px rgba(79, 70, 229, 0.4)"
-              : "none",
-          }}
-        >
-          View Trip Itinerary
-        </button>
-
-        {/* Live Loading Indicator */}
-        {!isTripReady && (
-          <div className="w-full mt-4 flex justify-center items-center">
-            <Loader2 className="h-5 w-5 animate-spin text-indigo-400 mr-2" />
-            <span className="text-sm text-gray-500">
-              Generating itinerary...
-            </span>
-          </div>
+        {isTripReady ? (
+          <>
+            {/* Ready state */}
+            <div className='w-10 h-10 bg-green-50 rounded-full flex items-center justify-center mb-3'>
+              <CheckCircle className='h-5 w-5 text-green-500' />
+            </div>
+            <p className='text-sm font-semibold text-gray-900 mb-1'>Trip Ready!</p>
+            <p className='text-xs text-gray-400 mb-4'>
+              {changeSummary ?? "Your personalised itinerary is ready to explore."}
+            </p>
+            <button
+              onClick={handleViewTripClick}
+              className='w-full flex items-center justify-center gap-2 py-2.5 bg-gray-900 hover:bg-orange-500 text-white text-sm font-medium rounded-lg transition-colors duration-150'
+            >
+              <MapPin className='h-4 w-4' />
+              View Trip Itinerary
+            </button>
+          </>
+        ) : (
+          <>
+            {/* Loading state */}
+            <div className='w-10 h-10 bg-orange-50 rounded-full flex items-center justify-center mb-3'>
+              <Loader2 className='h-5 w-5 text-orange-400 animate-spin' />
+            </div>
+            <p className='text-sm font-semibold text-gray-900 mb-1'>Building your trip…</p>
+            <p className='text-xs text-gray-400'>
+              Gathering destinations, hotels & activities for you.
+            </p>
+          </>
         )}
+
       </div>
     </div>
   );

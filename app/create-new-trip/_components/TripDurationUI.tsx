@@ -1,71 +1,69 @@
 import React, { useState } from 'react';
 
-// Props: onSelectedOption is the function to send the confirmed duration back to the chat
 interface TripDurationProps {
-    onSelectedOption: (value: string) => void;
+  onSelectedOption: (value: string) => void;
 }
 
 function TripDurationUI({ onSelectedOption }: TripDurationProps) {
-    const [duration, setDuration] = useState(3); // Start with a default of 3 days
+  const [duration, setDuration] = useState(3);
 
-    // Handlers for incrementing and decrementing the duration
-    const handleIncrement = () => {
-        setDuration(prev => prev + 1);
-    };
+  const handleIncrement = () => setDuration(prev => prev + 1);
+  const handleDecrement = () => { if (duration > 1) setDuration(prev => prev - 1); };
+  const handleConfirm = () => onSelectedOption(`${duration} Days`);
 
-    const handleDecrement = () => {
-        // Prevent duration from going below 1 day
-        if (duration > 1) {
-            setDuration(prev => prev - 1);
-        }
-    };
+  return (
+    <div className='mt-2 p-4 bg-white border border-gray-200 rounded-xl'>
+      <p className='text-sm font-medium text-gray-700 mb-4 text-center'>How many days?</p>
 
-    // Handler for the Confirm button
-    const handleConfirm = () => {
-        // Send the confirmed duration back to the AI
-        onSelectedOption(`${duration} Days`);
-    };
+      {/* Stepper */}
+      <div className='flex items-center justify-center gap-5 mb-5'>
+        <button
+          onClick={handleDecrement}
+          disabled={duration <= 1}
+          className='w-9 h-9 flex items-center justify-center rounded-lg border border-gray-200 text-gray-600 hover:border-red-300 hover:bg-red-50 hover:text-red-500 disabled:opacity-30 disabled:cursor-not-allowed transition-all duration-150 text-lg font-medium'
+        >
+          −
+        </button>
 
-    return (
-        <div className="bg-white p-6 rounded-2xl shadow-lg mt-3 w-full max-w-sm mx-auto">
-            <h3 className="text-xl font-bold mb-4 text-center">How many days do you want to travel?</h3>
-            <div className="flex items-center justify-center space-x-4 mb-6">
-                
-                {/* Minus Button */}
-                <button
-                    onClick={handleDecrement}
-                    className="p-3 text-4xl font-light text-gray-700 bg-gray-200 rounded-full hover:bg-red-700 hover:text-white transition duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
-                    disabled={duration <= 1}
-                >
-                    &minus;
-                </button>
-
-                {/* Duration Display */}
-                <span className="text-5xl font-extrabold text-primary w-32 text-center select-none">
-                    {duration} Day{duration !== 1 && 's'}
-                </span>
-
-                {/* Plus Button */}
-                <button
-                    onClick={handleIncrement}
-                    className="p-3 text-4xl font-light text-gray-700 bg-gray-200 rounded-full hover:bg-green-700 hover:text-white transition duration-200"
-                >
-                    +
-                </button>
-            </div>
-
-            {/* Confirm Button */}
-            <div className="flex justify-center">
-                <button
-                    onClick={handleConfirm}
-                    // 💥 Applied bg-primary and hover:bg-primary/90 for a slight contrast on hover
-                    className="w-full max-w-[200px] py-3 text-lg font-semibold text-white bg-primary rounded-xl shadow-xl hover:bg-primary/90 transition duration-200 transform hover:scale-[1.02]"
-                >
-                    Confirm
-                </button>
-            </div>
+        <div className='text-center min-w-[80px]'>
+          <span className='text-4xl font-bold text-gray-900'>{duration}</span>
+          <p className='text-xs text-gray-400 mt-0.5'>{duration === 1 ? 'day' : 'days'}</p>
         </div>
-    );
+
+        <button
+          onClick={handleIncrement}
+          className='w-9 h-9 flex items-center justify-center rounded-lg border border-gray-200 text-gray-600 hover:border-green-300 hover:bg-green-50 hover:text-green-500 transition-all duration-150 text-lg font-medium'
+        >
+          +
+        </button>
+      </div>
+
+      {/* Quick presets */}
+      <div className='flex gap-2 justify-center mb-4'>
+        {[3, 5, 7, 10].map((d) => (
+          <button
+            key={d}
+            onClick={() => setDuration(d)}
+            className={`px-3 py-1 text-xs rounded-full border transition-all duration-150 ${
+              duration === d
+                ? 'bg-gray-900 text-white border-gray-900'
+                : 'border-gray-200 text-gray-500 hover:border-gray-400'
+            }`}
+          >
+            {d}d
+          </button>
+        ))}
+      </div>
+
+      {/* Confirm */}
+      <button
+        onClick={handleConfirm}
+        className='w-full py-2.5 bg-gray-900 hover:bg-orange-500 text-white text-sm font-medium rounded-lg transition-colors duration-150'
+      >
+        Confirm {duration} {duration === 1 ? 'day' : 'days'}
+      </button>
+    </div>
+  );
 }
 
 export default TripDurationUI;
