@@ -44,8 +44,11 @@
     - name: Run Roamify container
       command: >
         docker run -d
-        -p 80:3000
+        -p 3000:3000
         --env-file /home/ubuntu/.env
         --name roamify
         --restart always
         sakshamjoshii/roamifyai:latest
+    
+    - name: Install nginx
+      command: sudo apt install nginx
