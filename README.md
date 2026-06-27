@@ -124,6 +124,11 @@ NEXT_PUBLIC_MAPBOX_API_KEY=<mapbox_api_key>
 
 3. `npm run dev`
 
+## Requirements
+
+- Node.js 20 LTS
+- npm 10+
+
 Application runs at:
 http://localhost:3000
 # What This Project Demonstrates
