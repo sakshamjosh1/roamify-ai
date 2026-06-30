@@ -7,7 +7,7 @@ RoamifyAI is a **full-stack AI travel planning platform** that generates persona
 The project combines **AI-powered itinerary generation, real-time backend infrastructure, interactive mapping, and a modern frontend**, while being deployed using a **production-style DevOps pipeline with Docker, Terraform, Ansible, GitHub Actions, and AWS.**
 
 # Live Demo
-https://roamifyai.tech 
+https://roamify-ai.vercel.app
 
 # Core Features
 * Conversational AI chatbot for trip planning
